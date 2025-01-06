@@ -1,0 +1,84 @@
+{% extends 'partials/base.html' %}
+
+{% block content %}
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet" />
+<style>
+  /* Custom styling for the form */
+  .form-container {
+      max-width: 600px;
+      margin: 0 auto;
+  }
+  .form-group {
+      margin-bottom: 15px;
+  }
+  .form-group label {
+      font-weight: bold;
+  }
+  .form-group input,
+  .form-group textarea {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+  }
+  .form-group input[type="file"] {
+      padding: 5px;
+  }
+  .btn-custom {
+      background-color: #007bff;
+      color: white;
+      padding: 10px 20px;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+  }
+  .btn-custom:hover {
+      background-color: #0056b3;
+  }
+</style>
+
+<div class="container">
+  <div class="row my-4">
+    <div class="col-md-4"></div>
+    <div class="col-md-8">
+      <div class="card">
+        <div class="card-header bg-info text-white">Profile Update</div>
+        <div class="card-body">
+          <div class="form-container">
+            <form method="POST" enctype="multipart/form-data">
+              {% csrf_token %}
+              
+              <div class="form-group">
+                <label for="username">Username</label>
+                {{ user_form.username }}
+              </div>
+              
+              <div class="form-group">
+                <label for="email">Email</label>
+                {{ user_form.email }}
+              </div>
+
+              <div class="form-group">
+                <label for="address">Address</label>
+                {{ profile_form.address }}
+              </div>
+
+              <div class="form-group">
+                <label for="phone">Phone</label>
+                {{ profile_form.phone }}
+              </div>
+
+              <div class="form-group">
+                <label for="image">Profile Image</label>
+                {{ profile_form.image }}
+              </div>
+
+              <button type="submit" class="btn-custom">Update Profile</button>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Order Successful - Thank You!</title>
+  
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f9f9f9;
+      color: #333;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+    section {
+      background-color: #fff;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+      width: 100%;
+      max-width: 500px;
+    }
+    h1 {
+      color: #28a745;
+      font-size: 28px;
+      text-align: center;
+    }
+    p {
+      font-size: 16px;
+      text-align: center;
+    }
+    .order-summary {
+      margin-top: 20px;
+      background-color: #f1f1f1;
+      padding: 10px;
+      border-radius: 6px;
+    }
+    a {
+      color: #007bff;
+      text-decoration: none;
+    }
+    .cta-button {
+      display: block;
+      text-align: center;
+      margin-top: 30px;
+    }
+    .cta-button a {
+      padding: 10px 20px;
+      background-color: #28a745;
+      color: white;
+      border-radius: 5px;
+      text-decoration: none;
+      font-weight: bold;
+    }
+    .cta-button a:hover {
+      background-color: #218838;
+    }
+  </style>
+</head>
+<body>
+  <section>
+    <h1>Thank You for Your Order!</h1>
+    <p>Your order has been successfully placed. We appreciate your business!</p>
+
+    {% comment %} <div class="order-summary">
+      <p><strong>Order ID:</strong> #{{ order.id }}</p>
+      <p><strong>Total:</strong> ₹{{ order.total_price }}</p>
+      <p><strong>Shipping Address:</strong></p>
+      <p>{{ order.shipping_address.address }}, {{ order.shipping_address.city }}, {{ order.shipping_address.state }} - {{ order.shipping_address.zipcode }}</p>
+    </div> {% endcomment %}
+
+    <div class="cta-button">
+      <a href="{% url 'test' %}">View Your Order Details</a>
+    </div>
+
+    <p>If you have any questions, feel free to email us at <a href="mailto:orders@example.com">orders@example.com</a>.</p>
+  </section>
+</body>
+</html>

@@ -1,0 +1,156 @@
+{% extends 'partials/base.html' %}
+
+{% block content %}
+  {% if user.is_authenticated and user.is_staff %}
+    <div class="container">
+      <div class="row my-5">
+        <div class="col-md-6">
+          <div class="bg-white p-3">
+            <pre>{{ product_names }}</pre>
+            <canvas id="myChart1" width="400" height="300"></canvas>
+            <script>
+              var ctx = document.getElementById('myChart1').getContext('2d');
+              var myChart1 = new Chart(ctx, {
+                type: 'pie',
+                data: {
+                  labels: [{% for order in order_chart %}'{{ order.product.name }}',{% endfor %}],
+                  datasets: [{
+                    label: 'Orders',
+                    data: [{% for order in order_chart %}{{ order.order_quantity }},{% endfor %}],
+                    backgroundColor: [
+                      'rgba(255, 99, 132, 1)', 'rgba(54, 162, 235, 1)', 'rgba(255, 206, 86, 1)', 
+                      'rgba(75, 192, 192, 1)', 'rgba(153, 102, 255, 1)', 'rgba(255, 159, 64, 1)'
+                    ],
+                    borderColor: [
+                      'rgba(255, 99, 132, 1)', 'rgba(54, 162, 235, 1)', 'rgba(255, 206, 86, 1)', 
+                      'rgba(75, 192, 192, 1)', 'rgba(153, 102, 255, 1)', 'rgba(255, 159, 64, 1)'
+                    ],
+                    borderWidth: 1
+                  }]
+                },
+                options: {
+                  responsive: true,
+                  plugins: {
+                    legend: {
+                      position: 'top',
+                    },
+                    tooltip: {
+                      callbacks: {
+                        label: function(tooltipItem) {
+                          return tooltipItem.label + ': ' + tooltipItem.raw + ' orders';
+                        }
+                      }
+                    }
+                  }
+                }
+              });
+            </script>
+          </div>
+        </div>
+
+        <div class="col-md-6">
+          <div class="bg-white p-3">
+            <canvas id="myChart" width="400" height="300"></canvas>
+            <script>
+              var ctx = document.getElementById('myChart').getContext('2d');
+              var myChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                  labels: [{% for product in product %}'{{ product.name }}',{% endfor %}],
+                  datasets: [{
+                    label: 'Products',
+                    data: [{% for product in product %}{{ product.quantity }},{% endfor %}],
+                    backgroundColor: [
+                      'rgba(255, 99, 132, 1)', 'rgba(54, 162, 235, 1)', 'rgba(255, 206, 86, 1)', 
+                      'rgba(75, 192, 192, 1)', 'rgba(153, 102, 255, 1)', 'rgba(255, 159, 64, 1)'
+                    ],
+                    borderColor: [
+                      'rgba(255, 99, 132, 1)', 'rgba(54, 162, 235, 1)', 'rgba(255, 206, 86, 1)', 
+                      'rgba(75, 192, 192, 1)', 'rgba(153, 102, 255, 1)', 'rgba(255, 159, 64, 1)'
+                    ],
+                    borderWidth: 1
+                  }]
+                },
+                options: {
+                  responsive: true,
+                  plugins: {
+                    legend: {
+                      position: 'top',
+                    },
+                    tooltip: {
+                      callbacks: {
+                        label: function(tooltipItem) {
+                          return tooltipItem.label + ': ' + tooltipItem.raw + ' units';
+                        }
+                      }
+                    }
+                  },
+                  scales: {
+                    y: {
+                      beginAtZero: true
+                    }
+                  }
+                }
+              });
+            </script>
+          </div>
+        </div>
+      </div>
+    </div>
+  {% else %}
+    {% for message in messages %}
+      <div class="alert alert-success" role="alert">
+        <p id="messages">{{ message }}</p>
+      </div>
+    {% endfor %}
+    <div class="container mt-5">
+      <div class="cont_2">
+        <div class="card_1">
+          <!-- Product cards grid -->
+          <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 g-4">
+            {% for product in product %}
+              <div class="col">
+                <div class="card shadow-lg border-light rounded">
+                  <!-- Product Image -->
+                  {% if product.image %}
+                    <img src="{{ product.image.url }}" class="card-img-top" alt="{{ product.name }}" />
+                  {% else %}
+                    <img src="/media/product_images/default_image.jpg" class="card-img-top" alt="No image available" />
+                  {% endif %}
+                  <div class="card-body">
+                    <h5 class="card-title text-truncate" style="max-width: 100%;">{{ product.name }}</h5>
+                    <h6 class="card-subtitle mb-2 text-muted">{{ product.category }}</h6>
+                    <p class="card-text">
+                      <strong>Quantity:</strong>
+                      <span id="quantity">{{ product.quantity }}</span>
+                    </p>
+                    <p class="card-text">
+                      <strong>Price:</strong> ₹{{ product.price }}
+                    </p>
+                    <p class="card-text" style="max-height: 75px; overflow: hidden;">
+                      <strong>Description:</strong> {{ product.description }}
+                    </p>
+                    <!-- Display stock status -->
+                    {% if product.quantity == 0 %}
+                      <p class="text-danger">Out of stock</p>
+                    {% elif product.quantity < 10 %}
+                      <p class="text-warning">Product will be out of stock soon</p>
+                    {% else %}
+                      <p class="text-success">Product is available</p>
+                    {% endif %}
+                    <form action="{% url 'addto_cart' product.id %}" method="POST">
+                      {% csrf_token %}
+                      <button class="btn btn-primary btn-block" {% if product.quantity == 0 %}disabled="disabled"{% endif %}>
+                        Add to Cart
+                      </button>
+                    </form>
+                  </div>
+                </div>
+              </div>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+    </div>
+  {% endif %}
+{% endblock %}

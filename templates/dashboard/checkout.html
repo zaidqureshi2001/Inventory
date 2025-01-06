@@ -1,0 +1,79 @@
+{% extends 'partials/base.html' %}
+
+{% block content %}
+  <div class="row">
+    <!-- Form Section (Left Side) -->
+    <div class="col-lg-6">
+      <div class="box-element" id="form-wrapper">
+        <form id="checkout-form" method="POST" action="{% url 'process_checkout' %}">
+          {% csrf_token %}
+          <div id="user-info">
+            <div class="form-field">
+              <input required class="form-control" type="text" name="name" placeholder="Name.." />
+            </div>
+            <div class="form-field">
+              <input required class="form-control" type="email" name="email" placeholder="Email.." />
+            </div>
+          </div>
+
+          <div id="shipping-info">
+            <hr />
+            <p>Shipping Information:</p>
+            <hr />
+            <div class="form-field">
+              
+              <input required class="form-control" type="text" name="address" placeholder="Address.." />
+            </div>
+            <div class="form-field">
+              <input required class="form-control" type="text" name="city" placeholder="City.." />
+            </div>
+            <div class="form-field">
+              <input required class="form-control" type="tel" name="phone_no" placeholder="Number..." />
+            </div>
+            <div class="form-field">
+              <input required class="form-control" type="text" name="state" placeholder="State.." />
+            </div>
+            <div class="form-field">
+              <input required class="form-control" type="number" name="zipcode" placeholder="Zip code.." />
+            </div>
+            <div class="form-field">
+              <input required class="form-control" type="text" name="country" placeholder="Country.." />
+            </div>
+          </div>
+
+          <hr />
+          <button type="submit" id="checkout-button" class="btn btn-primary">Checkout</button>
+        </form>
+      </div>
+    </div>
+
+    <!-- Order Summary Section (Right Side) -->
+    <div class="col-lg-6">
+      <div class="box-element">
+        <a class="btn btn-outline-dark" href="{% url 'cart' %}">&#x2190; Back to Cart</a>
+        <hr />
+        <h3>Order Summary</h3>
+        <hr />
+        {% for product_id, item in cart_items.items %}
+          <div class="cart-row d-flex align-items-center">
+            <div style="flex:2">
+              <img class="row-image" src="{{ item.image }}" alt="{{ item.name }}" style="width: 100px; height: 100px; object-fit: cover;" />
+            </div>
+            <div style="flex:2">
+              <p>{{ item.name }}</p>
+            </div>
+            <div style="flex:1">
+              <p>${{ item.price|floatformat:2 }}</p>
+            </div>
+            <div style="flex:1">
+              <p>x {{ item.quantity }}</p>
+            </div>
+          </div>
+        {% endfor %}
+        <hr />
+        <h5>Items:</h5>
+        <h5>Total: $<span>{{ total_price|floatformat:2 }}</span></h5>
+      </div>
+    </div>
+  </div>
+{% endblock %}

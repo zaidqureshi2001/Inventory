@@ -1,0 +1,45 @@
+{% extends 'partials/base.html' %}
+
+{% block title %}
+  Orders
+{% endblock %}
+
+{% block content %}
+  <div class="container">
+    <div class="row my-4">
+      <div class="col-md-4"></div>
+      <div class="col-md-8">
+        <table class="table bg-white">
+          <thead class="bg-info">
+            <tr class="text-white">
+              <th scope="col">#</th>
+              <th scope="col">Product</th>
+              <th scope="col">Category</th>
+              <th scope="col">Quantity</th>
+              <th scope="col">Order by</th>
+              <th scope="col">Date and Time</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for order in orders %}
+              {% for item in order.orderitem_set.all %}
+                <tr>
+                  <th scope="row">{{ forloop.parentloop.counter }}</th>
+                  <td>{{ item.product.name }}</td>
+                  <td>{{ item.product.category }}</td>
+                  <td>{{ item.quantity }}</td>
+                  <td>{{ order.staff.username }}</td>
+                  <td>{{ order.date }}</td>
+                </tr>
+              {% endfor %}
+            {% empty %}
+              <tr>
+                <td colspan="6">No successful orders found.</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+{% endblock %}

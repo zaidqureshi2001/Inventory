@@ -1,0 +1,53 @@
+<div class="row">
+  <div class="col-md-4 mt-4">
+    <div class="card">
+      <div class="card-header bg-info text-white">Information</div>
+      <div class="card-body">
+        <marquee behavior="" direction="">
+          <h3 class="my-4">New Information</h3>
+        </marquee>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-8 mt-4">
+    <div class="card">
+      <div class="card-header bg-info text-white">Dashboard Statistics</div>
+      <div class="card-body">
+        <div class="row">
+          <div class="col-md-4">
+            <a class="text-decoration-none text-dark" href="{% url 'staff' %}">
+              <div class="card my-card shadow">
+                <div class="card-body text-center">
+                  <h4>Staff <i class="fas fa-users"></i></h4>
+                  <h4>{{worker}}</h4>
+                </div>
+              </div>
+            </a>
+          </div>
+          <div class="col-md-4">
+            <a class="text-decoration-none text-dark" href="{% url 'product'%}">
+              <div class="card my-card shadow">
+                <div class="card-body text-center">
+                  <h4>Products <i class="fas fa-box"></i></h4>
+                  <h4>{{product_count}}</h4>
+                </div>
+              </div>
+            </a>
+          </div>
+          <div class="col-md-4">
+            <a class="text-decoration-none text-dark" href="{%  url 'order' %}">
+              <div class="card my-card shadow">
+                <div class="card-body text-center">
+                  <h4>Orders <i class="fas fa-shipping-fast"></i></h4>
+                  <div>
+                    <h4>{{order_count}}</h4>
+                  </div>
+                </div>
+              </div>
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
