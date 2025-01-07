@@ -129,6 +129,7 @@ STATICFILES_DIRS = [
 ]
 STRIPE_PUBLISHABLE_KEY = "pk_test_51QbiGnFxDudN5dLBVWw7nhsg1Pwt9uNRkLp74Te90Ivw8TuSLN04qnLcGHXKCMlrLQudKBJ9NZZW1K6duzFGwayg0019mTuNAC"
 STRIPE_SECRET_KEY = "sk_test_51QbiGnFxDudN5dLBh5rcEyylZiZH75aBdX3kRIkVnFapRQTTBE6qsDMPoLQOo2EFbwHb5PLJfrAgAfKfFZeYnhXw00ZzesGO8E"
+STRIPE_WEBHOOK_SECRET = "whsec_8e1d922807117a894d3eb67b7b15adac85fc432dc7f7cb6bf08a8958090c3878"
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
 

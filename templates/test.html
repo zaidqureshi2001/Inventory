@@ -120,10 +120,10 @@
                   <div class="card-body">
                     <h5 class="card-title text-truncate" style="max-width: 100%;">{{ product.name }}</h5>
                     <h6 class="card-subtitle mb-2 text-muted">{{ product.category }}</h6>
-                    <p class="card-text">
+                    {% comment %} <p class="card-text">
                       <strong>Quantity:</strong>
                       <span id="quantity">{{ product.quantity }}</span>
-                    </p>
+                    </p> {% endcomment %}
                     <p class="card-text">
                       <strong>Price:</strong> ₹{{ product.price }}
                     </p>

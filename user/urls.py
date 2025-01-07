@@ -27,5 +27,5 @@ urlpatterns = [
     path('success/', views.success, name='success'), 
     path('cancel/', views.cancel, name='cancel'), 
     path('process-checkout/', ProcessCheckoutView.as_view(), name='process_checkout'),
-    path('payment-webhook/', views.payment_webhook, name='payment_webhook'),
+    path('stripe/webhook/', views.payment_webhook, name='payment_webhook'),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

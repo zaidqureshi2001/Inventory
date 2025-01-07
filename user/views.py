@@ -7,6 +7,20 @@ from django.http import JsonResponse
 from django.contrib.auth import authenticate, logout ,login as auth_login
 from .forms import CreateUserForm , UserUpdateForm , ProfileUpdateForm , ProductForm , OrderForm
 from django.contrib.auth.decorators import login_required
+from django.views import View
+import stripe
+from django.conf import settings
+from .models import User, ShippingAddress, Order, OrderItem, Product
+import logging
+from django.shortcuts import redirect
+from django.http import JsonResponse
+from django.views import View
+from django.utils import timezone
+import stripe
+from .models import User, ShippingAddress, Product
+from django.http import JsonResponse
+from django.views.decorators.csrf import csrf_exempt
+
 def register(request):
     if request.method == 'POST':
         form = CreateUserForm(request.POST)
@@ -107,11 +121,9 @@ def product(request):
 
 
 def order(request):
-    order = Order.objects.all()
     order_count = Order.objects.count()
     orders = Order.objects.filter(payment_status='success')
     context = {
-        'orders':order,
         'order_count' : order_count,
         'orders': orders
     }
@@ -189,49 +201,19 @@ def staff_details(request , pk):
     return render(request  , 'dashboard/staff_details.html' , context)
 
 ##############################################################################
-# def addto_cart(request, product_id):
-#     product = Product.objects.get(id=product_id) 
-#     cart = request.session.get('cart', {})
-
-#     if str(product_id) in cart:
-#         cart[str(product.id)]['quantity'] += 1
-#     else:
-#         cart[str(product.id)] = {
-#             'name': product.name,
-#             'price': str(product.price),
-#             'quantity': 1, 
-#             'description': product.description,
-#             'image': product.image.url 
-#         }
-
-#     print("Cart stored in session:", product_id)
-
-
-#     request.session['cart'] = cart
-#     messages.success(request, f'{product.name} has been added to cart')
-#     return redirect('test')
 from django.shortcuts import get_object_or_404
 
 @login_required(login_url='login')
 def addto_cart(request, product_id):
-    # Fetch the product based on the provided product_id
     product = get_object_or_404(Product, id=product_id)
-    
-    # Get the current cart from the session
     cart = request.session.get('cart', {})
-
-    # Check the quantity already in the cart for this product
     quantity_in_cart = cart.get(str(product_id), {}).get('quantity', 0)
-
-    # Ensure we don’t add more products than are in stock
     if quantity_in_cart < product.quantity:
-        # Product is available, update the cart
         if str(product_id) in cart:
-            # Increment the quantity if product already exists in the cart
             cart[str(product_id)]['quantity'] += 1
         else:
-            # Add new product to cart
             cart[str(product_id)] = {
+                'product_id': product.id,  
                 'name': product.name,
                 'price': str(product.price),
                 'quantity': 1,
@@ -239,44 +221,65 @@ def addto_cart(request, product_id):
                 'image': product.image.url
             }
 
-        # Store the updated cart in the session
+        # Debugging: Print the cart structure before saving
+        print("Cart after adding item:", cart)
         request.session['cart'] = cart
         messages.success(request, f'{product.name} has been added to cart')
     else:
-        # Show an error if stock is insufficient
         messages.error(request, f'Not enough stock available for {product.name}')
-    
-    return redirect('cart')  # Redirect to the cart page after adding to cart
-
-    
+    return redirect('test')  
 
 def cart(request):
-    cart = request.session.get('cart', {})  
-    total_price = 0  
+    cart = request.session.get('cart', {})
+    total_price = 0
     print("Cart items:", cart)
     for item in cart.values():
+        if 'product_id' not in item:
+            print(f"Missing 'product_id' in cart item: {item}")
+            continue
+
         item['total_price'] = float(item['price']) * item['quantity']
         total_price += item['total_price']
+
+        try:
+            product = Product.objects.get(id=item['product_id'])
+            item['available_stock'] = product.quantity  # Add available stock to the cart item
+        except Product.DoesNotExist:
+            item['available_stock'] = 0  # If the product is missing, set stock to 0
 
     context = {'cart_items': cart, 'total_price': total_price}
     return render(request, 'dashboard/cart.html', context)
 
 
+
+
 def update_cart(request, product_id, action):
     cart = request.session.get('cart', {})
-
+    
+    try:
+        # Get the product from the database
+        product = Product.objects.get(id=product_id)
+        available_stock = product.quantity  # Get the available stock for the product
+    except Product.DoesNotExist:
+        return JsonResponse({'success': False, 'error': 'Product not found.'})
+    
     if str(product_id) in cart:
+        current_quantity = cart[str(product_id)]['quantity']
+        
         if action == 'increase':
+            if current_quantity >= available_stock:
+                return JsonResponse({'success': False, 'error': 'Cannot increase quantity above available stock.'})
             cart[str(product_id)]['quantity'] += 1
-        elif action == 'decrease' and cart[str(product_id)]['quantity'] > 1:
+        
+        elif action == 'decrease' and current_quantity > 1:
             cart[str(product_id)]['quantity'] -= 1
-
+        
         total_price = 0
         for item in cart.values():
             total_price += float(item['price']) * item['quantity']
 
         request.session['cart'] = cart
-        print(f"Cart after update: {cart}") 
+        print(f"Cart after update: {cart}")
         return JsonResponse({
             'success': True,
             'new_quantity': cart[str(product_id)]['quantity'],
@@ -322,22 +325,18 @@ def delete_cart_item(request, product_id):
 #*******************************************
 
 
-from django.shortcuts import render, redirect
-from django.views import View
-from django.utils import timezone
-from django.contrib.auth.decorators import login_required
-from django.http import JsonResponse
-from django.views.decorators.csrf import csrf_exempt
-import json
-import stripe
-from django.conf import settings
-from .models import Order, Product, ShippingAddress, OrderItem
-from django.contrib.auth.models import User
-stripe.api_key = settings.STRIPE_SECRET_KEY  
 
+
+
+
+logger = logging.getLogger(__name__)
+
+stripe.api_key = settings.STRIPE_SECRET_KEY 
+logger = logging.getLogger(__name__)
+stripe.api_key = settings.STRIPE_SECRET_KEY
 class ProcessCheckoutView(View):
     def post(self, request, *args, **kwargs):
-        # Get user data from the request
+        # Extract data from the request
         name = request.POST.get('name')
         email = request.POST.get('email')
         address = request.POST.get('address')
@@ -345,7 +344,7 @@ class ProcessCheckoutView(View):
         state = request.POST.get('state')
         zipcode = request.POST.get('zipcode')
         phone_no = request.POST.get('phone_no')
-        
+
         try:
             # Ensure user exists
             user = User.objects.get(email=email)
@@ -361,65 +360,144 @@ class ProcessCheckoutView(View):
             zipcode=zipcode,
             phone_no=phone_no,
         )
-        
-        # Create order
-        order = Order.objects.create(
-            staff=user,
-            date=timezone.now(),
-            payment_status='failed',
-            shipping_address=shipping_address  # Add shipping address here
-        )
 
+        # Calculate the total price for the cart
         total_price = 0
         cart = request.session.get('cart', {})
         if not cart:
             return JsonResponse({'status': 'failed', 'message': 'Cart is empty or missing'}, status=400)
-        # print("cartss", product_id, item)
+
         for product_id, item in cart.items():
-            # print("Processing product:", product_id, "with item:", item)
             try:
-                # Ensure the product exists and is correctly retrieved
                 product = Product.objects.get(id=product_id)
                 total_price += product.price * item['quantity']
-                
-                # Create order item for each product in the cart
-                OrderItem.objects.create(
-                    product=product,
-                    quantity=item['quantity'],
-                    order=order
-                )
-
             except Product.DoesNotExist:
                 return JsonResponse({'status': 'failed', 'message': f'Product with ID {product_id} does not exist'}, status=404)
-            except KeyError:
-                return JsonResponse({'status': 'failed', 'message': 'Invalid cart structure or missing quantity for product'}, status=400)
 
         # Create Stripe checkout session
-        checkout_session = stripe.checkout.Session.create(
-            payment_method_types=['card'],
-            line_items=[{
-                'price_data': {
-                    'currency': 'INR',
-                    'product_data': {
-                        'name': f'Order #{order.id}',
+        try:
+            checkout_session = stripe.checkout.Session.create(
+                payment_method_types=['card'],
+                line_items=[{
+                    'price_data': {
+                        'currency': 'INR',
+                        'product_data': {'name': f'Order for {email}'},  # Order name as email or user
+                        'unit_amount': int(total_price * 100),
                     },
-                    'unit_amount': int(total_price * 100),  # Amount in cents
+                    'quantity': 1,
+                }],
+                mode='payment',
+                metadata={
+                    'user_id': user.id,
+                    'shipping_address_id': shipping_address.id,
+                    'cart_data': str(cart),  # Convert cart data into string for metadata
                 },
-                'quantity': 1,
-            }],
-            mode='payment',
-            customer_email=email,  # Send the customer's email to Stripe
-            success_url=request.build_absolute_uri('/success'),
-            cancel_url=request.build_absolute_uri('/cancel'),
-        )
+                customer_email=email,
+                success_url=request.build_absolute_uri('/success'),
+                cancel_url=request.build_absolute_uri('/cancel'),
+            )
+        except Exception as e:
+            logger.error(f"Stripe checkout session creation failed: {str(e)}")
+            return JsonResponse({'status': 'failed', 'message': 'Payment session creation failed'}, status=500)
 
         return redirect(checkout_session.url, code=303)
 
+ 
+
+@csrf_exempt
+def payment_webhook(request):
+    if request.method == 'POST':
+        payload = request.body
+        endpoint_secret = settings.STRIPE_WEBHOOK_SECRET
+
+        try:
+            # Verify Stripe signature
+            event = stripe.Webhook.construct_event(
+                payload, request.headers.get('Stripe-Signature'), endpoint_secret
+            )
+        except ValueError as e:
+            logger.error(f"Invalid payload: {str(e)}")
+            return JsonResponse({'status': 'failed', 'message': 'Invalid payload'}, status=400)
+        except stripe.error.SignatureVerificationError as e:
+            logger.error(f"Invalid signature: {str(e)}")
+            return JsonResponse({'status': 'failed', 'message': 'Invalid signature'}, status=400)
+
+        # Log the entire event for debugging
+        logger.info(f"Stripe webhook event received: {event}")
+
+        # Handle Stripe event
+        event_type = event.get('type')
+        event_data = event['data']['object']
+
+        logger.info(f"Processing event type: {event_type}")
+
+        if event_type == 'checkout.session.completed':
+            logger.info("Checkout session completed event received")
+
+            # Log the metadata for debugging
+            metadata = event_data.get('metadata', {})
+            logger.info(f"Metadata: {metadata}")
+
+            # Extract user and cart data from metadata
+            user_id = metadata.get('user_id')
+            shipping_address_id = metadata.get('shipping_address_id')
+            cart_data = metadata.get('cart_data')
+
+            if not user_id or not shipping_address_id or not cart_data:
+                logger.error("Missing necessary metadata fields (user_id, shipping_address_id, or cart_data)")
+                return JsonResponse({'status': 'failed', 'message': 'Missing metadata fields'}, status=400)
+
+            # Retrieve the user and shipping address
+            try:
+                user = User.objects.get(id=user_id)
+                shipping_address = ShippingAddress.objects.get(id=shipping_address_id)
+                cart = eval(cart_data)  # Rebuild cart data from string
+            except Exception as e:
+                logger.error(f"Error retrieving user or shipping address: {str(e)}")
+                return JsonResponse({'status': 'failed', 'message': 'Error retrieving user data'}, status=500)
+
+            # Create the order after successful payment
+            order = Order.objects.create(
+                staff=user,
+                date=timezone.now(),
+                payment_status='success',
+                shipping_address=shipping_address
+            )
+
+            total_price = 0
+            # Process cart items
+            for product_id, item in cart.items():
+                try:
+                    product = Product.objects.get(id=product_id)
+                    total_price += product.price * item['quantity']
+
+                    # Create order item
+                    OrderItem.objects.create(
+                        product=product,
+                        quantity=item['quantity'],
+                        order=order
+                    )
+                except Product.DoesNotExist:
+                    logger.error(f"Product with ID {product_id} does not exist")
+                    return JsonResponse({'status': 'failed', 'message': f'Product with ID {product_id} does not exist'}, status=404)
+
+            # Update order total price
+            order.total_price = total_price
+            order.save()
+
+            logger.info(f"Order created successfully for Order ID {order.id}")
+
+        elif event_type == 'payment_intent.succeeded':
+            logger.info("Payment succeeded for PaymentIntent")
+        else:
+            logger.info(f"Unhandled event type: {event_type}")
+
+        return JsonResponse({'status': 'success'}, status=200)
+
+    return JsonResponse({'status': 'failed', 'message': 'Invalid request method'}, status=400)
 
 
-
-
-# Success page
+# # Success page
 def success(request):
     context = {
         'payment_status': 'success'
@@ -427,36 +505,9 @@ def success(request):
     return render(request, 'dashboard/success.html', context)
 
 
-# Cancel page
+# # Cancel page
 def cancel(request):
     context = {
         'payment_status': 'cancel'
     }
     return render(request, 'dashboard/cancel.html', context)
-
-
-# Webhook to handle payment status from Stripe
-@csrf_exempt
-def payment_webhook(request):
-    if request.method == 'POST':
-        payload = json.loads(request.body)
-        payment_status = payload.get('payment_status')
-        order_id = payload.get('order_id')
-
-        try:
-            # Find the order and update payment status
-            order = Order.objects.get(id=order_id)
-            if payment_status == 'success':
-                order.payment_status = 'success'  # Update to success
-            else:
-                order.payment_status = 'failed'  # Update to failed
-            order.save()
-
-            return JsonResponse({'status': 'success'}, status=200)
-
-        except Order.DoesNotExist:
-            return JsonResponse({'status': 'failed', 'message': 'Order not found'}, status=404)
-    else:
-        return JsonResponse({'status': 'failed', 'message': 'Invalid request method'}, status=400)
-
-
