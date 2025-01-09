@@ -1,0 +1,35 @@
+{% extends 'partials/base.html' %}
+
+{% block content %}
+<h2>My Orders</h2>
+
+{% if orders %}
+<table class="table">
+    <thead>
+        <tr>
+            <th>Order ID</th>
+            <th>Product</th>
+            <th>Quantity</th>
+            <th>Total Price</th>
+            <th>Payment Status</th>
+            <th>Date</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for order in orders %}
+        {% comment %} <tr>
+            <td>{{ order.id }}</td>
+            <td>{{ order.product.name }}</td>
+            <td>{{ order.order_quantity }}</td>
+            <td>₹{{ order.total_price }}</td>
+            <td>{{ order.payment_status }}</td>
+            <td>{{ order.date|date:"d M Y, h:i A" }}</td>
+        </tr> {% endcomment %}
+        {% endfor %}
+    </tbody>
+</table>
+{% else %}
+<p>You have not placed any orders yet.</p>
+{% endif %}
+
+{% endblock %}

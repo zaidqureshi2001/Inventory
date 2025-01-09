@@ -149,12 +149,174 @@
 .card-body .btn {
   margin-top: auto;
 }
+.navbar {
+  background-color: #212529 !important; /* Force dark background */
+  padding: 1rem 2rem;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.navbar-brand {
+  color: #ffffff !important; /* Force white text */
+}
+
+.navbar-nav .nav-link {
+  color: #f8f9fa !important; /* Force white text */
+}
+
+.navbar-nav .nav-link:hover {
+  color: #ff6f61 !important; /* Highlight hover effect */
+}
+
+.navbar-toggler-icon {
+  background-color: #ffffff;
+}
+.navbar {
+  background-color: #212529; /* Dark background */
+  padding: 1rem 2rem; /* Adjust padding for a better layout */
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); /* Subtle shadow */
+}
+
+.profile-dropdown {
+  position: relative;
+}
+
+.dropdown-menu {
+  display: none;
+  position: absolute;
+  top: 100%;
+  left: 0;
+  background-color:rgb(0, 0, 0);
+  border: none;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  border-radius: 5px;
+  z-index: 1000;
+}
+
+.dropdown-menu a {
+  color: black;
+  padding: 10px 15px;
+  text-decoration: none;
+  display: block;
+  transition: background-color 0.3s ease;
+}
+
+.dropdown-menu a:hover {
+  background-color: #ff6f61;
+  color: #ffffff;
+}
+
+.profile-dropdown:hover .dropdown-menu {
+  display: block;
+}
+.navbar-brand {
+  color: #ffffff;
+  font-size: 1.75rem;
+  font-weight: bold;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  transition: color 0.3s ease;
+}
+.navbar-brand {
+  color: #ffffff;
+  font-size: 1.75rem;
+  font-weight: bold;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  transition: color 0.3s ease;
+  padding-left: 40px;
+
+}
+
+
+.navbar-brand:hover {
+  color: #dc3545; /* Hover effect for Inventory */
+}
+
+.navbar-nav .nav-link {
+  color: #f8f9fa; /* White text for all nav links */
+  font-size: 1.1rem;
+  padding: 0.75rem 1rem;
+  transition: color 0.3s ease;
+}
+
+.navbar-nav .nav-link.active {
+  color: #ffffff; /* Dashboard link set to white */
+}
+
+.navbar-nav .nav-link:hover {
+  color: #ff6f61; /* Highlight color on hover */
+  background-color: #343a40;
+  border-radius: 5px; /* Smooth corners */
+}
+
+.navbar-toggler {
+  border: none;
+}
+
+.navbar-toggler-icon {
+  background-color:white; /* White icon for toggler */
+}
+
+/* Profile and Logout Links */
+.d-flex {
+  align-items: center;
+  gap: 1rem;
+  margin-right: 1rem;
+}
+
+.profile,
+.logout {
+  color: #f8f9fa;
+  text-decoration: none;
+  font-size: 1rem;
+  font-weight: 500;
+}
+
+.logout {
+  color: #ff6f61;
+}
+
+.profile:hover,
+.logout:hover {
+  color: #dc3545; /* Hover effect for logout and profile */
+}
+
+/* Cart Icon */
+.cart-icon {
+  color: #f8f9fa;
+  font-size: 1.5rem;
+  margin-left: 1rem;
+  transition: color 0.3s ease;
+}
+
+.cart-icon:hover {
+  color: #ff6f61;
+}
+
+/* Responsive Behavior */
+@media (max-width: 768px) {
+  .navbar-brand {
+    font-size: 1.5rem;
+  }
+
+  .navbar-nav .nav-link {
+    font-size: 1rem;
+    text-align: center;
+  }
+
+  .d-flex {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .cart-icon {
+    font-size: 1.2rem;
+  }
+}
 
       </style>
   </head>
   <body>
-    
-
     {% include 'partials/nav.html' %}
     {% if user.is_authenticated and user.is_staff and user.is_superuser %}
       {% include 'partials/top.html' %}

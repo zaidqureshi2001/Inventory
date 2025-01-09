@@ -1,46 +1,78 @@
+<style>
+  /* Decrease card width */
+.my-card {
+  width: 90%; /* Decrease card width */
+  transition: transform 0.3s ease, box-shadow 0.3s ease, background-color 0.3s ease;
+}
+
+/* Apply grow effect */
+.my-card.grow {
+  transform: scale(1.1); /* Makes the card grow */
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2); /* Adds a shadow for emphasis */
+}
+
+/* Active Card styling */
+.active-card {
+  background-color:rgb(13 202 240) !important; /* Change background color when active */
+  color: white; /* Change text color to white when active */
+}
+
+/* Apply transitions for hover effects */
+.my-card:hover {
+  transform: scale(1.05); /* Slightly grow on hover */
+}
+
+</style>
 <div class="row">
-  <div class="col-md-4 mt-4">
-    <div class="card">
-      <div class="card-header bg-info text-white">Information</div>
-      <div class="card-body">
-        <marquee behavior="" direction="">
-          <h3 class="my-4">New Information</h3>
-        </marquee>
-      </div>
-    </div>
-  </div>
-  <div class="col-md-8 mt-4">
+  <div class="mt-4">
     <div class="card">
       <div class="card-header bg-info text-white">Dashboard Statistics</div>
       <div class="card-body">
         <div class="row">
-          <div class="col-md-4">
+          <!-- Staff Card -->
+          <div class="col-md-3">
             <a class="text-decoration-none text-dark" href="{% url 'staff' %}">
-              <div class="card my-card shadow">
+              <div class="card my-card shadow {% if request.path == '/staff/' %}grow active-card{% endif %}">
                 <div class="card-body text-center">
-                  <h4>Staff <i class="fas fa-users"></i></h4>
-                  <h4>{{worker}}</h4>
+                  <h4>Staff <i class="fas fa-users"></i></h4>             
+                  <h4>{{ worker }}</h4>
                 </div>
               </div>
             </a>
           </div>
-          <div class="col-md-4">
-            <a class="text-decoration-none text-dark" href="{% url 'product'%}">
-              <div class="card my-card shadow">
+
+          <!-- Products Card -->
+          <div class="col-md-3">
+            <a class="text-decoration-none text-dark" href="{% url 'product' %}">
+              <div class="card my-card shadow {% if request.path == '/product/' %}grow active-card{% endif %}">
                 <div class="card-body text-center">
                   <h4>Products <i class="fas fa-box"></i></h4>
-                  <h4>{{product_count}}</h4>
+                  <h4>{{ product_count }}</h4>
                 </div>
               </div>
             </a>
           </div>
-          <div class="col-md-4">
-            <a class="text-decoration-none text-dark" href="{%  url 'order' %}">
-              <div class="card my-card shadow">
+
+          <!-- Orders Card -->
+          <div class="col-md-3">
+            <a class="text-decoration-none text-dark" href="{% url 'order' %}">
+              <div class="card my-card shadow {% if request.path == '/order/' %}grow active-card{% endif %}">
                 <div class="card-body text-center">
                   <h4>Orders <i class="fas fa-shipping-fast"></i></h4>
                   <div>
-                    <h4>{{order_count}}</h4>
+                    <h4>{{ order_count }}</h4>
+                  </div>
+                </div>
+              </div>
+            </a>
+          </div>
+          <div class="col-md-3">
+            <a class="text-decoration-none text-dark" href="{% url 'Lowstock' %}">
+              <div class="card my-card shadow {% if request.path == '/Lowstock/' %}grow active-card{% endif %}">
+                <div class="card-body text-center">
+                  <h4>Low Stock <i class="fas fa-shipping-fast"></i></h4>
+                  <div>
+                    <h4>0</h4>
                   </div>
                 </div>
               </div>

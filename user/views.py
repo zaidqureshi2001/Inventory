@@ -61,24 +61,21 @@ def test(request):
     order = Order.objects.filter(staff=request.user)
     order_chart = Order.objects.all()
     product = Product.objects.all()
-    # if request.method == 'POST':
-    #     form = OrderForm(request.POST)
-    #     if form.is_valid():
-    #         product_name = form.cleaned_data.get('product').name  
-    #         messages.success(request, f"'{product_name}' has been added to your order.")
-    #         isinstance=form.save(commit=False)
-    #         isinstance.staff = request.user
-    #         isinstance.save()
-    #         return redirect('test')
-        
-    # else:
-    #     form=OrderForm()
+    workers = User.objects.all()
+    worker = workers.count()
+    order_count = Order.objects.count()
+    orders = Order.objects.filter(payment_status='success')
+    product_count = Product.objects.count()
     context = {
 
-     'order':order,
-    #  'form':form,
-     'product':product ,
-     'order_chart':order_chart
+    'order':order,
+    'product':product ,
+    'order_chart':order_chart,
+    'workers':workers,
+    'worker':worker,
+    'order_count' : order_count,
+    'orders': orders,
+    'product_count':product_count
     }
     return render(request , 'test.html' , context)
 
@@ -87,10 +84,16 @@ def staff(request):
     xyz = Product.objects.all()
     workers = User.objects.all()
     worker = workers.count()
+    order_count = Order.objects.count()
+    orders = Order.objects.filter(payment_status='success')
+    product_count = Product.objects.count()
     context = {
         'workers':workers,
         'worker':worker,
-        'xyz' : xyz
+        'xyz' : xyz,
+        'order_count' : order_count,
+        'orders': orders,
+        'product_count':product_count
     }
     return render(request , 'dashboard/staff.html' , context)
 
@@ -102,6 +105,10 @@ def top(request):
 def product(request):
     items = Product.objects.all()
     product_count = Product.objects.count()
+    workers = User.objects.all()
+    worker = workers.count()
+    order_count = Order.objects.count()
+    orders = Order.objects.filter(payment_status='success')
     if request.method == 'POST':
         form = ProductForm(request.POST , request.FILES)
         if form.is_valid():
@@ -115,7 +122,10 @@ def product(request):
     context  = {
         'items': items ,
         'form' : form  ,
-        'product_count':product_count
+        'product_count':product_count,
+        'order_count' : order_count,
+        'orders': orders,
+        'worker':worker
     }
     return render(request , 'dashboard/product.html', context)
 
@@ -123,9 +133,14 @@ def product(request):
 def order(request):
     order_count = Order.objects.count()
     orders = Order.objects.filter(payment_status='success')
+    workers = User.objects.all()
+    worker = workers.count()
+    product_count = Product.objects.count()
     context = {
         'order_count' : order_count,
-        'orders': orders
+        'orders': orders,
+        'worker':worker,
+        'product_count':product_count
     }
     return render(request , 'dashboard/order.html' , context)
 
@@ -200,6 +215,24 @@ def staff_details(request , pk):
     }
     return render(request  , 'dashboard/staff_details.html' , context)
 
+
+def Lowstock(request):
+    product = Product.objects.all()
+    workers = User.objects.all()
+    worker = workers.count()
+    order_count = Order.objects.count()
+    orders = Order.objects.filter(payment_status='success')
+    product_count = Product.objects.count()
+    context = {
+    'order':order,
+    'product':product ,
+    'workers':workers,
+    'worker':worker,
+    'order_count' : order_count,
+    'orders': orders,
+    'product_count':product_count
+    }
+    return render(request , 'dashboard/Lowstock.html' ,context)
 ##############################################################################
 from django.shortcuts import get_object_or_404
 
@@ -318,7 +351,15 @@ def delete_cart_item(request, product_id):
 
 
 
+def myorder(request):
+    orders = Order.objects.filter(staff=request.user).order_by('-date')  # Latest orders first
 
+    context = {
+        'orders': orders,
+    }
+    return render(request , 'dashboard/my_order.html' , context)
+    
+    
 
 
 
@@ -477,6 +518,10 @@ def payment_webhook(request):
                         quantity=item['quantity'],
                         order=order
                     )
+                    if product.quantity < item['quantity']:
+                        return JsonResponse({'status': 'failed', 'message': f'Not enough stock for product {product.name}'}, status=400)
+                    product.quantity -= item['quantity']
+                    product.save()
                 except Product.DoesNotExist:
                     logger.error(f"Product with ID {product_id} does not exist")
                     return JsonResponse({'status': 'failed', 'message': f'Product with ID {product_id} does not exist'}, status=404)

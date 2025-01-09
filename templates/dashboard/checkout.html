@@ -55,7 +55,7 @@
         <h3>Order Summary</h3>
         <hr />
         {% for product_id, item in cart_items.items %}
-          <div class="cart-row d-flex align-items-center">
+          <div class="cart-row d-flex align-items-center text-black">
             <div style="flex:2">
               <img class="row-image" src="{{ item.image }}" alt="{{ item.name }}" style="width: 100px; height: 100px; object-fit: cover;" />
             </div>
@@ -63,7 +63,7 @@
               <p>{{ item.name }}</p>
             </div>
             <div style="flex:1">
-              <p>${{ item.price|floatformat:2 }}</p>
+              <p>₹{{ item.price|floatformat:2 }}</p>
             </div>
             <div style="flex:1">
               <p>x {{ item.quantity }}</p>
@@ -72,7 +72,7 @@
         {% endfor %}
         <hr />
         <h5>Items:</h5>
-        <h5>Total: $<span>{{ total_price|floatformat:2 }}</span></h5>
+        <h5>Total: ₹<span>{{ total_price|floatformat:2 }}</span></h5>
       </div>
     </div>
   </div>
