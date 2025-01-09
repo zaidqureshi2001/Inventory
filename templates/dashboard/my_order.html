@@ -7,24 +7,24 @@
 <table class="table">
     <thead>
         <tr>
-            <th>Order ID</th>
             <th>Product</th>
             <th>Quantity</th>
-            <th>Total Price</th>
-            <th>Payment Status</th>
+            <th>Price</th>
+            <th>Description</th>
             <th>Date</th>
         </tr>
     </thead>
     <tbody>
         {% for order in orders %}
-        {% comment %} <tr>
-            <td>{{ order.id }}</td>
-            <td>{{ order.product.name }}</td>
-            <td>{{ order.order_quantity }}</td>
-            <td>₹{{ order.total_price }}</td>
-            <td>{{ order.payment_status }}</td>
-            <td>{{ order.date|date:"d M Y, h:i A" }}</td>
-        </tr> {% endcomment %}
+            {% for item in order.orderitem_set.all %}
+            <tr>
+                <td>{{ item.product.name }}</td>
+                <td>{{ item.quantity }}</td>
+                <td>₹{{ item.product.price }}</td>
+                <td>{{ item.product.description }}</td>
+                <td>{{ order.date|date:"d M Y, h:i A" }}</td>
+            </tr>
+            {% endfor %}
         {% endfor %}
     </tbody>
 </table>

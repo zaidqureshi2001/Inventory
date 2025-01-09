@@ -170,19 +170,23 @@ def profile_update(request):
         }
     return render(request , 'dashboard/profile_update.html', context)
 
-@login_required(login_url='login')
-def cart(request):
-    if request.user.is_authenticated:
-        profile, created = Profile.objects.get_or_create(staff=request.user)
-        order, created = Order.objects.get_or_create(staff=request.user)
-        items = order.orderitem_set.all()
-    else:
-        items = []
-    context = {
-        'items':items
-    }
+# @login_required(login_url='login')
+# def cart(request):
+#     if request.user.is_authenticated:
+#         profile, created = Profile.objects.get_or_create(staff=request.user)
+#         order, created = Order.objects.get_or_create(staff=request.user)
+#         items = order.orderitem_set.all()
+#         print("these are the ",items)
+#         total_quantity = sum(item.quantity for item in items)
+#     else:
+#         items = []
+#         total_quantity = 0
+#     context = {
+#         'items':items,
+#         'total_quantity': total_quantity
+#     }
 
-    return render(request , 'dashboard/cart.html' , context)
+#     return render(request , 'dashboard/cart.html' , context)
 
 def delete(request , pk):
     # item = Product.objects.get(id=pk)
@@ -351,13 +355,19 @@ def delete_cart_item(request, product_id):
 
 
 
-def myorder(request):
-    orders = Order.objects.filter(staff=request.user).order_by('-date')  # Latest orders first
+from django.shortcuts import render
+from django.contrib.auth.decorators import login_required
 
+@login_required(login_url='login')
+def myorder(request):
+    # Fetch only the orders related to the logged-in user
+    orders = Order.objects.filter(staff=request.user).prefetch_related('orderitem_set').order_by('-date')  # Adjust relationship name if different
+    
     context = {
-        'orders': orders,
+        'orders': orders,  # Pass orders to the template
     }
-    return render(request , 'dashboard/my_order.html' , context)
+    return render(request, 'dashboard/my_order.html', context)
+
     
     
 

@@ -13,8 +13,15 @@
   />
   <!-- Custom CSS -->
   <style>
-    /* General Navbar Styling */
-   
+  .cart-count{
+    position: absolute;
+    top: 10px;
+    font-size: 14px;
+  }
+  .cart{
+    padding-right: 40px;
+
+  }
   </style>
 </head>
 <body>
@@ -51,10 +58,9 @@
           </div>
         </form>
         {% if not request.user.is_staff %}
-        <div>
-          <a href="{% url 'cart' %}" class="cart-icon"
-            ><i class="fa-solid fa-cart-shopping"></i
-          ></a>
+        <div class="cart">
+          <a href="{% url 'cart' %}" class="cart-icon"><i class="fa-solid fa-cart-shopping">
+            <span class="cart-count">{{total_value}}</span></i></a>
         </div>
         {% endif %}
       </div>

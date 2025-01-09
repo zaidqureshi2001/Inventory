@@ -5,7 +5,6 @@
     <div class="col-lg-12">
       <div class="box-element">
         <a class="btn btn-outline-dark" href="{% url 'test' %}">&#x2190; Continue Shopping</a>
-
         <br />
         <br />
         <table class="table">
@@ -45,72 +44,6 @@
     </div>
   </div>
     <script>
-      {% comment %} document.addEventListener('DOMContentLoaded', function () {
-        // Existing code for updating cart quantity
-        document.querySelectorAll('.update-cart').forEach((button) => {
-          button.addEventListener('click', function () {
-            console.log('hello')
-            const productId = this.getAttribute('data-product');
-            const action = this.getAttribute('data-action');
-            const quantityElement = document.querySelector(`#quantity-${productId}`);
-            const currentQuantity = parseInt(quantityElement.textContent);
-            
-            // Get the available stock for the product (assuming you are passing this data)
-            const availableStock = parseInt(this.getAttribute('data-stock'));
-    
-            // Prevent increase if quantity exceeds available stock
-            if (action === "increase" && currentQuantity >= availableStock) {
-              alert("Cannot increase quantity above available stock.");
-              return;
-            }
-    
-            fetch(`/update_cart/${productId}/${action}/`, {
-              method: 'GET'
-            })
-            .then((response) => response.json())
-            .then((data) => {
-              if (data.success) {
-                quantityElement.textContent = data.new_quantity;
-    
-                const totalElement = document.querySelector(`#total-${productId}`);
-                const productPrice = parseFloat(totalElement.dataset.price);
-                totalElement.textContent = `${(productPrice * data.new_quantity).toFixed(2)}`;
-    
-                document.getElementById('total-price').textContent = `${data.new_total_price.toFixed(2)}`;
-              }
-            })
-            .catch((error) => {
-              console.error('Error updating cart:', error);
-            });
-          });
-        });
-    
-        // Add delete functionality
-        document.querySelectorAll('.delete-from-cart').forEach((button) => {
-          button.addEventListener('click', function () {
-            const productId = this.getAttribute('data-product');
-            fetch(`/delete_cart_item/${productId}/`, {
-              method: 'GET'
-            })
-            .then((response) => response.json())
-            .then((data) => {
-              if (data.success) {
-                // Remove the product row from the table
-                const row = document.getElementById(`cart-item-${productId}`);
-                if (row) {
-                  row.remove();
-                }
-                // Update the total price
-                document.getElementById('total-price').textContent = `${data.new_total_price.toFixed(2)}`;
-              }
-            })
-            .catch((error) => {
-              console.error('Error deleting cart item:', error);
-            });
-          });
-        });
-      }); {% endcomment %}
-
       document.addEventListener('DOMContentLoaded', function () {
         document.querySelectorAll('.update-cart').forEach((button) => {
           button.addEventListener('click', function () {
