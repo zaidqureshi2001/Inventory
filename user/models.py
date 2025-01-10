@@ -46,7 +46,9 @@ class ShippingAddress(models.Model):
     order = models.ForeignKey(Order, on_delete=models.SET_NULL, null=True, related_name='shipping_addresses')  # Add related_name
 
     def __str__(self):
-        return f"{self.customer.username}'s address"
+        if self.customer:
+            return f"{self.customer.username}'s address"
+        return "No customer"
 
 class OrderItem(models.Model):
     product = models.ForeignKey(Product, on_delete=models.CASCADE)

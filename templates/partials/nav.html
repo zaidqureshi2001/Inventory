@@ -60,7 +60,7 @@
         {% if not request.user.is_staff %}
         <div class="cart">
           <a href="{% url 'cart' %}" class="cart-icon"><i class="fa-solid fa-cart-shopping">
-            <span class="cart-count">{{total_value}}</span></i></a>
+            <span class="cart-count">{{cart_items|length }}</span></i></a>
         </div>
         {% endif %}
       </div>

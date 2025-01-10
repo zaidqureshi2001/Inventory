@@ -7,6 +7,8 @@
       <div class="box-element" id="form-wrapper">
         <form id="checkout-form" method="POST" action="{% url 'process_checkout' %}">
           {% csrf_token %}
+          
+          <!-- User Information -->
           <div id="user-info">
             <div class="form-field">
               <input required class="form-control" type="text" name="name" placeholder="Name.." />
@@ -16,12 +18,12 @@
             </div>
           </div>
 
+          <!-- Shipping Information -->
           <div id="shipping-info">
             <hr />
             <p>Shipping Information:</p>
             <hr />
             <div class="form-field">
-              
               <input required class="form-control" type="text" name="address" placeholder="Address.." />
             </div>
             <div class="form-field">
@@ -39,10 +41,27 @@
             <div class="form-field">
               <input required class="form-control" type="text" name="country" placeholder="Country.." />
             </div>
+
+            <!-- Checkbox for using previous address -->
+            <div id="previous-address-container" class="form-field" style="{% if previous_address %}display:block;{% else %}display:none;{% endif %}">
+              <label for="use-previous-address">
+                <input type="checkbox" id="use-previous-address" name="use_previous_address">
+                Use Previous Address
+              </label>
+              {% if previous_address %}
+              <div id="previous-address-details" style="margin-top: 10px; border: 1px solid #ddd; padding: 10px; border-radius: 5px;">
+                <p><strong>Address:</strong> {{ previous_address.address }}</p>
+                <p><strong>City:</strong> {{ previous_address.city }}</p>
+                <p><strong>State:</strong> {{ previous_address.state }}</p>
+                <p><strong>Zipcode:</strong> {{ previous_address.zipcode }}</p>
+                <p><strong>Phone No:</strong> {{ previous_address.phone_no }}</p>
+              </div>
+              {% endif %}
+            </div>
           </div>
 
           <hr />
-          <button type="submit" id="checkout-button" class="btn btn-primary">Checkout</button>
+          <button type="submit" id="checkout-button" class="btn btn-primary">Proceed To Pay</button>
         </form>
       </div>
     </div>
@@ -76,4 +95,30 @@
       </div>
     </div>
   </div>
+
+  <!-- JavaScript to handle the checkbox display and autofill -->
+  <script>
+    document.addEventListener("DOMContentLoaded", function () {
+      const usePreviousAddressCheckbox = document.getElementById("use-previous-address");
+      const addressInputs = document.querySelectorAll("#shipping-info input");
+
+      {% if previous_address %}
+        document.getElementById('previous-address-container').style.display = 'block';
+      {% endif %}
+
+      usePreviousAddressCheckbox?.addEventListener("change", function () {
+        if (this.checked) {
+          {% if previous_address %}
+            document.querySelector("input[name='address']").value = "{{ previous_address.address }}";
+            document.querySelector("input[name='city']").value = "{{ previous_address.city }}";
+            document.querySelector("input[name='state']").value = "{{ previous_address.state }}";
+            document.querySelector("input[name='zipcode']").value = "{{ previous_address.zipcode }}";
+            document.querySelector("input[name='phone_no']").value = "{{ previous_address.phone_no }}";
+          {% endif %}
+        } else {
+          addressInputs.forEach(input => input.value = '');
+        }
+      });
+    });
+  </script>
 {% endblock %}

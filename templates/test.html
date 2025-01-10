@@ -1,8 +1,9 @@
 {% extends 'partials/base.html' %}
-
+{% block title %}
+  Dashboard
+{% endblock %}
 {% block content %}
   {% if user.is_authenticated and user.is_staff %}
-  
     <div class="container">
       <div class="row my-5">
         <div class="col-md-6">

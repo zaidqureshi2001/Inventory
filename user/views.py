@@ -58,6 +58,8 @@ def user_logout(request):
 
 @login_required(login_url='login')
 def test(request):
+    cart = request.session.get('cart', {})
+    print("cart_length" , len(cart))
     order = Order.objects.filter(staff=request.user)
     order_chart = Order.objects.all()
     product = Product.objects.all()
@@ -66,8 +68,11 @@ def test(request):
     order_count = Order.objects.count()
     orders = Order.objects.filter(payment_status='success')
     product_count = Product.objects.count()
+    items = Product.objects.filter(quantity__lt=50)
+    Lowstock_count =items.count()
     context = {
-
+    'cart_items':cart,
+    'Lowstock_count':Lowstock_count,
     'order':order,
     'product':product ,
     'order_chart':order_chart,
@@ -81,6 +86,8 @@ def test(request):
 
 @login_required(login_url='login')
 def staff(request):
+    items = Product.objects.filter(quantity__lt=50)
+    Lowstock_count =items.count()
     xyz = Product.objects.all()
     workers = User.objects.all()
     worker = workers.count()
@@ -88,6 +95,7 @@ def staff(request):
     orders = Order.objects.filter(payment_status='success')
     product_count = Product.objects.count()
     context = {
+        'Lowstock_count':Lowstock_count ,
         'workers':workers,
         'worker':worker,
         'xyz' : xyz,
@@ -103,6 +111,8 @@ def top(request):
 
 @login_required(login_url='login')
 def product(request):
+    items = Product.objects.filter(quantity__lt=50)
+    Lowstock_count =items.count()
     items = Product.objects.all()
     product_count = Product.objects.count()
     workers = User.objects.all()
@@ -120,6 +130,7 @@ def product(request):
         form = ProductForm()
      
     context  = {
+        'Lowstock_count':Lowstock_count,
         'items': items ,
         'form' : form  ,
         'product_count':product_count,
@@ -131,12 +142,15 @@ def product(request):
 
 
 def order(request):
+    items = Product.objects.filter(quantity__lt=50)
+    Lowstock_count =items.count()
     order_count = Order.objects.count()
     orders = Order.objects.filter(payment_status='success')
     workers = User.objects.all()
     worker = workers.count()
     product_count = Product.objects.count()
     context = {
+        'Lowstock_count':Lowstock_count ,
         'order_count' : order_count,
         'orders': orders,
         'worker':worker,
@@ -147,11 +161,16 @@ def order(request):
 
 @login_required(login_url='login')
 def profile(request):
-    return render(request , 'dashboard/profile.html')
+    cart = request.session.get('cart', {})
+    context={
+        'cart_items':cart,
+    }
+    return render(request , 'dashboard/profile.html' , context)
 
 
 @login_required(login_url='login')
 def profile_update(request):
+    cart = request.session.get('cart', {})
     if request.method == 'POST':
         user_form = UserUpdateForm(request.POST , instance=request.user)
         profile_form = ProfileUpdateForm(request.POST, request.FILES, instance=request.user.profile)
@@ -165,31 +184,14 @@ def profile_update(request):
         profile_form = ProfileUpdateForm(instance=request.user.profile)
 
     context = {
+        'cart_items':cart,
         'user_form' : user_form,
         'profile_form':profile_form,
         }
     return render(request , 'dashboard/profile_update.html', context)
 
-# @login_required(login_url='login')
-# def cart(request):
-#     if request.user.is_authenticated:
-#         profile, created = Profile.objects.get_or_create(staff=request.user)
-#         order, created = Order.objects.get_or_create(staff=request.user)
-#         items = order.orderitem_set.all()
-#         print("these are the ",items)
-#         total_quantity = sum(item.quantity for item in items)
-#     else:
-#         items = []
-#         total_quantity = 0
-#     context = {
-#         'items':items,
-#         'total_quantity': total_quantity
-#     }
-
-#     return render(request , 'dashboard/cart.html' , context)
 
 def delete(request , pk):
-    # item = Product.objects.get(id=pk)
     item = Product.objects.get(id=pk)
     if request.method == 'POST':
         item.delete()
@@ -221,6 +223,8 @@ def staff_details(request , pk):
 
 
 def Lowstock(request):
+    items = Product.objects.filter(quantity__lt=50)
+    Lowstock_count =items.count()
     product = Product.objects.all()
     workers = User.objects.all()
     worker = workers.count()
@@ -228,6 +232,8 @@ def Lowstock(request):
     orders = Order.objects.filter(payment_status='success')
     product_count = Product.objects.count()
     context = {
+    'Lowstock_count': Lowstock_count,
+    'items':items,
     'order':order,
     'product':product ,
     'workers':workers,
@@ -237,6 +243,8 @@ def Lowstock(request):
     'product_count':product_count
     }
     return render(request , 'dashboard/Lowstock.html' ,context)
+
+
 ##############################################################################
 from django.shortcuts import get_object_or_404
 
@@ -261,6 +269,7 @@ def addto_cart(request, product_id):
         # Debugging: Print the cart structure before saving
         print("Cart after adding item:", cart)
         request.session['cart'] = cart
+        print("Cart length:", len(cart))
         messages.success(request, f'{product.name} has been added to cart')
     else:
         messages.error(request, f'Not enough stock available for {product.name}')
@@ -269,7 +278,6 @@ def addto_cart(request, product_id):
 def cart(request):
     cart = request.session.get('cart', {})
     total_price = 0
-    print("Cart items:", cart)
     for item in cart.values():
         if 'product_id' not in item:
             print(f"Missing 'product_id' in cart item: {item}")
@@ -291,8 +299,7 @@ def cart(request):
 
 
 def update_cart(request, product_id, action):
-    cart = request.session.get('cart', {})
-    
+    cart = request.session.get('cart', {})   
     try:
         # Get the product from the database
         product = Product.objects.get(id=product_id)
@@ -327,14 +334,35 @@ def update_cart(request, product_id, action):
 
 
 
+# def checkout(request):  
+#     cart = request.session.get('cart', {})
+#     if not cart:
+#         return redirect('test')
+#     total_price = sum(float(item['price']) * int(item['quantity']) for item in cart.values())
+#     return render(request, 'dashboard/checkout.html', {
+#         'cart_items': cart,
+#         'total_price': total_price
+#     })
 def checkout(request):  
     cart = request.session.get('cart', {})
     if not cart:
         return redirect('test')
+
     total_price = sum(float(item['price']) * int(item['quantity']) for item in cart.values())
+    previous_address = None
+
+    if request.user.is_authenticated:
+        try:
+            # Fetch the user's most recent shipping address
+            previous_address = ShippingAddress.objects.filter(customer=request.user).last()
+            print("address",previous_address)
+        except ShippingAddress.DoesNotExist:
+            previous_address = None
+
     return render(request, 'dashboard/checkout.html', {
         'cart_items': cart,
-        'total_price': total_price
+        'total_price': total_price,
+        'previous_address': previous_address,
     })
 
 
@@ -362,9 +390,10 @@ from django.contrib.auth.decorators import login_required
 def myorder(request):
     # Fetch only the orders related to the logged-in user
     orders = Order.objects.filter(staff=request.user).prefetch_related('orderitem_set').order_by('-date')  # Adjust relationship name if different
-    
+    cart = request.session.get('cart', {})
     context = {
-        'orders': orders,  # Pass orders to the template
+        'cart_items':cart,
+        'orders': orders,  
     }
     return render(request, 'dashboard/my_order.html', context)
 
@@ -382,7 +411,7 @@ def myorder(request):
 
 logger = logging.getLogger(__name__)
 
-stripe.api_key = settings.STRIPE_SECRET_KEY 
+
 logger = logging.getLogger(__name__)
 stripe.api_key = settings.STRIPE_SECRET_KEY
 class ProcessCheckoutView(View):
@@ -401,7 +430,7 @@ class ProcessCheckoutView(View):
             user = User.objects.get(email=email)
         except User.DoesNotExist:
             return JsonResponse({'status': 'failed', 'message': 'User not found'}, status=404)
-
+        
         # Create shipping address
         shipping_address = ShippingAddress.objects.create(
             customer=user,
@@ -411,8 +440,7 @@ class ProcessCheckoutView(View):
             zipcode=zipcode,
             phone_no=phone_no,
         )
-
-        # Calculate the total price for the cart
+        print(shipping_address.customer)
         total_price = 0
         cart = request.session.get('cart', {})
         if not cart:
@@ -444,6 +472,9 @@ class ProcessCheckoutView(View):
                     'cart_data': str(cart),  # Convert cart data into string for metadata
                 },
                 customer_email=email,
+                shipping_address_collection={
+                    'allowed_countries': ['IN'],  # Replace 'IN' with appropriate country if needed
+                },
                 success_url=request.build_absolute_uri('/success'),
                 cancel_url=request.build_absolute_uri('/cancel'),
             )
@@ -452,7 +483,6 @@ class ProcessCheckoutView(View):
             return JsonResponse({'status': 'failed', 'message': 'Payment session creation failed'}, status=500)
 
         return redirect(checkout_session.url, code=303)
-
  
 
 @csrf_exempt
@@ -460,7 +490,6 @@ def payment_webhook(request):
     if request.method == 'POST':
         payload = request.body
         endpoint_secret = settings.STRIPE_WEBHOOK_SECRET
-
         try:
             # Verify Stripe signature
             event = stripe.Webhook.construct_event(
@@ -539,9 +568,19 @@ def payment_webhook(request):
             # Update order total price
             order.total_price = total_price
             order.save()
-
             logger.info(f"Order created successfully for Order ID {order.id}")
-
+            
+            cart = request.session.get('cart')
+            print(f"Cart before clearing: {cart}")    
+            if 'cart' in request.session:
+                del request.session['cart']
+                request.session.save() 
+                request.session.modified = True
+                print(f"Cart cleared for user: {user.email}")
+            else:
+                print("No cart is cleared")
+            cart_after = request.session.get('cart')
+            print(f"Cart before clearing: {cart_after}") 
         elif event_type == 'payment_intent.succeeded':
             logger.info("Payment succeeded for PaymentIntent")
         else:
@@ -552,7 +591,7 @@ def payment_webhook(request):
     return JsonResponse({'status': 'failed', 'message': 'Invalid request method'}, status=400)
 
 
-# # Success page
+
 def success(request):
     context = {
         'payment_status': 'success'
@@ -560,7 +599,7 @@ def success(request):
     return render(request, 'dashboard/success.html', context)
 
 
-# # Cancel page
+
 def cancel(request):
     context = {
         'payment_status': 'cancel'

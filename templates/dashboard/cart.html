@@ -95,9 +95,11 @@
             .then((data) => {
               if (data.success) {
                 // Remove the product row from the table
+                location.reload();
                 const row = document.getElementById(`cart-item-${productId}`);
                 if (row) {
                   row.remove();
+                  
                 }
                 // Update the total price
                 document.getElementById('total-price').textContent = `${data.new_total_price.toFixed(2)}`;
@@ -108,8 +110,7 @@
             });
           });
         });
-      });
-      
+      });    
     </script>
-    
+
 {% endblock %}
