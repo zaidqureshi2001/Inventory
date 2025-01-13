@@ -149,7 +149,17 @@ def order(request):
     workers = User.objects.all()
     worker = workers.count()
     product_count = Product.objects.count()
+    orders_with_subtotals = []
+    for order in orders:
+        subtotal = sum(
+            item.product.price * item.quantity for item in order.orderitem_set.all()
+        )
+        orders_with_subtotals.append({
+            'order': order,
+            'subtotal': subtotal,
+        })
     context = {
+        'orders_with_subtotals': orders_with_subtotals,
         'Lowstock_count':Lowstock_count ,
         'order_count' : order_count,
         'orders': orders,
@@ -333,16 +343,6 @@ def update_cart(request, product_id, action):
     return JsonResponse({'success': False})
 
 
-
-# def checkout(request):  
-#     cart = request.session.get('cart', {})
-#     if not cart:
-#         return redirect('test')
-#     total_price = sum(float(item['price']) * int(item['quantity']) for item in cart.values())
-#     return render(request, 'dashboard/checkout.html', {
-#         'cart_items': cart,
-#         'total_price': total_price
-#     })
 def checkout(request):  
     cart = request.session.get('cart', {})
     if not cart:
@@ -391,23 +391,23 @@ def myorder(request):
     # Fetch only the orders related to the logged-in user
     orders = Order.objects.filter(staff=request.user).prefetch_related('orderitem_set').order_by('-date')  # Adjust relationship name if different
     cart = request.session.get('cart', {})
+    orders_with_subtotals = []
+    for order in orders:
+        subtotal = sum(
+            item.product.price * item.quantity for item in order.orderitem_set.all()
+        )
+        orders_with_subtotals.append({
+            'order': order,
+            'subtotal': subtotal,
+        })
     context = {
         'cart_items':cart,
-        'orders': orders,  
+        'orders': orders,
+        'orders_with_subtotals': orders_with_subtotals,
     }
     return render(request, 'dashboard/my_order.html', context)
 
-    
-    
-
-
-
 #*******************************************
-
-
-
-
-
 
 logger = logging.getLogger(__name__)
 
@@ -605,3 +605,14 @@ def cancel(request):
         'payment_status': 'cancel'
     }
     return render(request, 'dashboard/cancel.html', context)
+
+
+
+
+
+
+
+
+
+
+

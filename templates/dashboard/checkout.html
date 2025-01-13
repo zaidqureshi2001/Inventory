@@ -94,10 +94,15 @@
         <h5>Total: ₹<span>{{ total_price|floatformat:2 }}</span></h5>
       </div>
     </div>
+
+
   </div>
 
-  <!-- JavaScript to handle the checkbox display and autofill -->
   <script>
+
+
+
+
     document.addEventListener("DOMContentLoaded", function () {
       const usePreviousAddressCheckbox = document.getElementById("use-previous-address");
       const addressInputs = document.querySelectorAll("#shipping-info input");
@@ -120,5 +125,7 @@
         }
       });
     });
+
+   
   </script>
 {% endblock %}
