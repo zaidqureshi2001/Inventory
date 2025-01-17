@@ -1,5 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import User
+from django.utils import timezone
 
 # Create your models here.
 CATEGORY = (
@@ -27,6 +28,7 @@ class Order(models.Model):
     staff = models.ForeignKey(User, on_delete=models.CASCADE, null=True)
     order_quantity = models.PositiveIntegerField(null=True)
     date = models.DateTimeField(auto_now_add=True)
+    created_at = models.DateTimeField(default=timezone.now)
     payment_status = models.CharField(
         max_length=20, choices=[('success', 'Success'), ('failed', 'Failed')],
         default='failed'
@@ -65,6 +67,7 @@ class Profile(models.Model):
     phone = models.CharField(max_length=20)
     image = models.ImageField(upload_to='Profile_Images')
     stripe_customer_id = models.CharField(max_length=255, blank=True, null=True)
+    stripe_payment_method_id = models.CharField(max_length=255, blank=True, null=True)  # Add this line
 
     def __str__(self):
         return f'{self.staff.username}--Profile'
