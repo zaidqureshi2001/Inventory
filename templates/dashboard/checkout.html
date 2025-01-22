@@ -8,30 +8,21 @@
           {% csrf_token %}
 
           <!-- User Information -->
-          <div id="user-info">
+          <div id="user-info" class="form-section">
+            <h4>Personal Information</h4>
             <div class="form-field">
               <input required class="form-control" type="text" name="name" placeholder="Name.." />
             </div>
             <div class="form-field">
-              <input required class="form-control" type="email" name="email" placeholder="Email.." />
+              <input required class="form-control" type="email" name="email" placeholder="Email.." value="{{ request.user.email }}" readonly/>
             </div>
           </div>
-
           <!-- Shipping Information -->
-          <div id="shipping-info">
+          <div id="shipping-info" class="form-section">
             <hr />
-            <p>Shipping Information:</p>
+            <h4>Shipping Information</h4>
             <hr />
-           <div class="form-field">
-            <select class="form-control" name="previous_address" id="previous_address" onchange="fillAddress()">
-              <option value="">Select Previous Address</option>
-              {% for address in previous_address %}
-                <option value="{{ address.id }}">{{ address.address }}</option>
-              {% empty %}
-                <option>No previous addresses available</option>
-              {% endfor %}
-            </select>
-          </div>
+            
             <!-- Input Fields for New Address -->
             <div class="form-field" id="address-inputs">
               <input class="form-control" type="text" name="address" id="address" placeholder="Address..." required />
@@ -41,24 +32,45 @@
               <input class="form-control" type="tel" name="phone_no" id="phone_no" placeholder="Phone Number..." required />
             </div>
           </div>
+            <!-- Card Div for Address Selection -->
+            <div class="address-cards">
+              <h5>Select Previous Address</h5>
+              {% for address in previous_address %}
+                <div class="card-address" onclick="toggleCheckbox(this, 'address-{{ address.id }}')">
+                  <input type="checkbox" name="previous_address" value="{{ address.id }}" id="address-{{ address.id }}" onchange="fillAddress.call(this)">
+                  <label for="address-{{ address.id }}">
+                    <strong>{{ address.address }}</strong><br>
+                    {{ address.city }}, {{ address.state }}<br>
+                    {{ address.zipcode }}<br>
+                    {{ address.phone_no }}
+                  </label>
+                </div>
+              {% empty %}
+                <p>No previous addresses available</p>
+              {% endfor %}
+            </div>
           <hr />
-          <div class="form-field">
-            <h5>Saved Cards:</h5>
-            {% for card in saved_cards %}
-                <div class="card-checkbox">
+          <!-- Saved Cards Section -->
+          <div class="form-section">
+            <h4>Saved Cards</h4>
+            <div class="saved-cards">
+              {% for card in saved_cards %}
+                <div class="card-saved" onclick="toggleCheckbox(this, 'card-{{ card.id }}')">
                     <input type="radio" name="saved_card" value="{{ card.id }}" id="card-{{ card.id }}" />
                     <label for="card-{{ card.id }}">
-                        {{ card.card.brand  }} ending in {{ card.card.last4 }}
+                        <div class="card-details">
+                            <span class="card-brand">{{ card.card.brand }}</span> ending in <span class="card-last4">{{ card.card.last4 }}</span>
+                        </div>
                     </label>
                 </div>
-            {% endfor %}
-            <div class="card-checkbox">
+              {% endfor %}
+            </div>
+            <div class="card-saved" onclick="toggleCheckbox(this, 'card-new')">
                 <input type="radio" name="saved_card" value="new" id="card-new" checked />
                 <label for="card-new">Use a new card</label>
             </div>
          </div>
-
-          <button type="submit" id="checkout-button" class="btn btn-primary">Proceed To Pay</button>
+          <button type="submit" id="checkout-button" class="btn btn-primary btn-lg">Proceed To Pay</button>
         </form>
       </div>
     </div>
@@ -92,33 +104,103 @@
     </div>
   </div>
   <script src="https://js.stripe.com/v3/"></script>
-<script>
-  // Parse the previous address data passed from the Django template
-  var previousAddresses = JSON.parse('{{ previous_address_json|escapejs }}');
-  // Function to Auto-Fill Shipping Address if Previous Address is Selected
-  function fillAddress() {
-    var selectedAddressId = document.getElementById("previous_address").value;
-    // Find the selected address in the list of previous addresses
-    var selectedAddress = previousAddresses.find(function (address) {
-      return address.id.toString() === selectedAddressId; // Match as a string
-    });
-    if (selectedAddress) {
-      console.log("Selected Address:", selectedAddress); // Debugging
-      document.getElementById("address").value = selectedAddress.address;
-      document.getElementById("city").value = selectedAddress.city;
-      document.getElementById("state").value = selectedAddress.state;
-      document.getElementById("zipcode").value = selectedAddress.zipcode;
-      document.getElementById("phone_no").value = selectedAddress.phone_no;
-    } else {
-      console.log("No address selected or invalid ID.");
-      // Clear the inputs if no valid address is selected
-      document.getElementById("address").value = "";
-      document.getElementById("city").value = "";
-      document.getElementById("state").value = "";
-      document.getElementById("zipcode").value = "";
-      document.getElementById("phone_no").value = "";
+  <script>
+    // Parse the previous address data passed from the Django template
+    var previousAddresses = JSON.parse('{{ previous_address_json|escapejs }}');
+    // Function to Auto-Fill Shipping Address if Previous Address is Selected
+    function fillAddress() {
+      var selectedAddressId = this.value;
+      var checkbox = this;
+      // Find the selected address in the list of previous addresses
+      var selectedAddress = previousAddresses.find(function (address) {
+        return address.id.toString() === selectedAddressId; // Match as a string
+      });
+      
+      if (checkbox.checked) {
+        // If the checkbox is checked, autofill the address fields
+        if (selectedAddress) {
+          document.getElementById("address").value = selectedAddress.address;
+          document.getElementById("city").value = selectedAddress.city;
+          document.getElementById("state").value = selectedAddress.state;
+          document.getElementById("zipcode").value = selectedAddress.zipcode;
+          document.getElementById("phone_no").value = selectedAddress.phone_no;
+        }
+      } else {
+        // If the checkbox is unchecked, clear the address fields
+        document.getElementById("address").value = "";
+        document.getElementById("city").value = "";
+        document.getElementById("state").value = "";
+        document.getElementById("zipcode").value = "";
+        document.getElementById("phone_no").value = "";
+      }
     }
-  }
+    
+    // Toggle the checkbox when the parent div (card) is clicked
+    function toggleCheckbox(cardDiv, checkboxId) {
+      var checkbox = document.getElementById(checkboxId);
+      checkbox.checked = !checkbox.checked;
+      checkbox.onchange();  // Trigger the onchange event
+    }
+  </script>
 
-</script>
+  <style>
+    .form-section {
+      margin-bottom: 20px;
+    }
+    .form-field {
+      margin-bottom: 15px;
+    }
+    .form-control {
+      padding: 10px;
+      border-radius: 5px;
+      width: 100%;
+    }
+    .btn-lg {
+      width: 100%;
+      padding: 15px;
+      font-size: 1.2rem;
+      border-radius: 5px;
+    }
+    .box-element {
+      background: #f8f9fa;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    }
+    .address-cards, .saved-cards {
+      display: flex;
+      flex-direction: column;
+    }
+    .card-address, .card-saved {
+      background: #ffffff;
+      border: 1px solid #ddd;
+      padding: 15px;
+      border-radius: 5px;
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      cursor: pointer;
+    }
+    .card-address input, .card-saved input {
+      margin-right: 10px;
+    }
+    .card-details {
+      font-weight: bold;
+    }
+    .card-checkbox {
+      margin-bottom: 10px;
+    }
+    .cart-row {
+      margin-bottom: 15px;
+      border-bottom: 1px solid #ddd;
+      padding-bottom: 10px;
+    }
+    .row-image {
+      max-width: 100%;
+      border-radius: 5px;
+    }
+    .btn-outline-dark {
+      border-radius: 5px;
+    }
+  </style>
 {% endblock %}

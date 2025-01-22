@@ -44,7 +44,6 @@ class ShippingAddress(models.Model):
     state = models.CharField(max_length=100)  # Added state
     zipcode = models.CharField(max_length=20)  # Added zipcode
     phone_no = models.CharField(max_length=20 , null=True , blank=True)
-    
     order = models.ForeignKey(Order, on_delete=models.SET_NULL, null=True, related_name='shipping_addresses')  # Add related_name
 
     def __str__(self):

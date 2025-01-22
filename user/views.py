@@ -3,7 +3,6 @@ from django.contrib.auth.forms import UserCreationForm
 from django.contrib import messages
 from django.contrib.auth.models import User
 from .models import Product , Order ,Profile
-
 from django.http import JsonResponse
 from django.contrib.auth import authenticate, logout ,login as auth_login
 from .forms import CreateUserForm , UserUpdateForm , ProfileUpdateForm , ProductForm , OrderForm
@@ -21,6 +20,9 @@ import stripe
 from .models import User, ShippingAddress, Product
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
+from collections import defaultdict
+from django.http import JsonResponse
+from datetime import datetime, timedelta
 from collections import defaultdict
 
 def register(request):
@@ -92,9 +94,10 @@ def test(request):
     cart = request.session.get('cart', {})
     print("cart_length", len(cart))
     
-    # Fetch orders and filter them as needed
+    # Fetch relevant data
     orders = Order.objects.filter(staff=request.user)
     order_chart = Order.objects.all()
+    order_items = OrderItem.objects.select_related('order').all()  # Fetch OrderItem objects
     product = Product.objects.all()
     workers = User.objects.all()
     worker = workers.count()
@@ -105,22 +108,16 @@ def test(request):
     lowstock_count = items.count()
     order_data = defaultdict(int)
 
-    # Group orders by the date they were created
-    order_data= defaultdict(int)
-    for order in order_chart:
-        created_at = order.created_at
+    # Group OrderItems by the date their associated order was created
+    for order_item in order_items:
+        created_at = order_item.order.created_at  # Use the order's created_at field
         if created_at:
             date_str = created_at.date()  # Use the date part for aggregation
-            quantity = order.order_quantity if order.order_quantity else 0 
-            print(f"Order created at: {created_at}, Date: {date_str}, Quantity: {quantity}")
-            order_data[date_str] += order.order_quantity if order.order_quantity else 0
- # Aggregate the quantity for the day
-    print("Aggregated order data:", order_data)
-
-
+            order_data[date_str] += 1  # Increment count for each OrderItem
+    
     # Sort the dates and order counts
-    order_dates = [date.strftime("%Y-%m-%d") for date in order_data.keys()]
-    order_quantities = list(order_data.values())
+    order_dates = [date.strftime("%Y-%m-%d") for date in sorted(order_data.keys())]
+    order_quantities = [order_data[date] for date in sorted(order_data.keys())]
     print("Order Dates:", order_dates)
     print("Order Quantities:", order_quantities)
 
@@ -136,21 +133,21 @@ def test(request):
         'orders': successful_orders,
         'product_count': product_count,
         'order_dates': order_dates,
-        'order_quantities': order_quantities, # Pass the order counts to the template
+        'order_quantities': order_quantities,  # Pass the order counts to the template
     }
 
     return render(request, 'test.html', context)
-from django.http import JsonResponse
-from datetime import datetime, timedelta
-from collections import defaultdict
+
+
 
 def get_order_data(request):
     order_data = defaultdict(int)
-
+    print(order_data)
     # Simulate order data
     for i in range(0, 7):  # Last 7 days
         date = datetime.now().date() - timedelta(days=i)
         order_data[date] = i * 5  # Example: 5, 10, 15, etc.
+        print(date)
 
     # Format the data for JSON response
     response = {
@@ -226,6 +223,7 @@ def order(request):
     product_count = Product.objects.count()
     orders_with_subtotals = []
     for order in orders:
+        print(order)
         subtotal = sum(
             item.product.price * item.quantity for item in order.orderitem_set.all()
         )
@@ -713,7 +711,7 @@ class ProcessCheckoutView(View):
             return redirect(checkout_session.url, code=303)
         except Exception as e:
             print(f"Stripe checkout session creation failed: {str(e)}")
-                    # Clear the cart after order creation      return JsonResponse({'status': 'failed', 'message': 'Payment session creation failed'}, status=500)
+            return JsonResponse({'status': 'failed', 'message': 'Payment session creation failed'}, status=500)
 
 
 @csrf_exempt
@@ -775,7 +773,9 @@ def payment_webhook(request):
                     date=timezone.now(),
                     payment_status='success',
                     shipping_address=shipping_address
+                    
                 )
+                
                 
 
                 total_price = 0
