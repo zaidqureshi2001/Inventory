@@ -155,10 +155,12 @@
     </div>
   {% endif %}
   <script>
+
     function updateChart() {
       fetch('/get-order-data/')
         .then(response => response.json())
         .then(data => {
+          console.log(data)
           myLineChart.data.labels = data.dates;
           myLineChart.data.datasets[0].data = data.quantities;
           myLineChart.update();  // Re-render the chart

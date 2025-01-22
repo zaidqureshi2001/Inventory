@@ -1,5 +1,4 @@
 {% extends 'partials/base.html' %}
-
 {% block content %}
   <div class="row">
     <!-- Form Section (Left Side) -->
@@ -23,9 +22,6 @@
             <hr />
             <p>Shipping Information:</p>
             <hr />
-
-            <!-- Dropdown for Previous Addresses -->
-           <!-- Dropdown for Previous Addresses -->
            <div class="form-field">
             <select class="form-control" name="previous_address" id="previous_address" onchange="fillAddress()">
               <option value="">Select Previous Address</option>
@@ -36,10 +32,6 @@
               {% endfor %}
             </select>
           </div>
-          
-          
-
-
             <!-- Input Fields for New Address -->
             <div class="form-field" id="address-inputs">
               <input class="form-control" type="text" name="address" id="address" placeholder="Address..." required />
@@ -48,15 +40,28 @@
               <input class="form-control" type="number" name="zipcode" id="zipcode" placeholder="Zip code..." required />
               <input class="form-control" type="tel" name="phone_no" id="phone_no" placeholder="Phone Number..." required />
             </div>
-
           </div>
-
           <hr />
+          <div class="form-field">
+            <h5>Saved Cards:</h5>
+            {% for card in saved_cards %}
+                <div class="card-checkbox">
+                    <input type="radio" name="saved_card" value="{{ card.id }}" id="card-{{ card.id }}" />
+                    <label for="card-{{ card.id }}">
+                        {{ card.card.brand  }} ending in {{ card.card.last4 }}
+                    </label>
+                </div>
+            {% endfor %}
+            <div class="card-checkbox">
+                <input type="radio" name="saved_card" value="new" id="card-new" checked />
+                <label for="card-new">Use a new card</label>
+            </div>
+         </div>
+
           <button type="submit" id="checkout-button" class="btn btn-primary">Proceed To Pay</button>
         </form>
       </div>
     </div>
-
     <!-- Order Summary Section (Right Side) -->
     <div class="col-lg-6">
       <div class="box-element">
@@ -85,23 +90,18 @@
         <h5>Total: ₹<span>{{ total_price|floatformat:2 }}</span></h5>
       </div>
     </div>
-
   </div>
   <script src="https://js.stripe.com/v3/"></script>
 <script>
-  
   // Parse the previous address data passed from the Django template
   var previousAddresses = JSON.parse('{{ previous_address_json|escapejs }}');
-  
   // Function to Auto-Fill Shipping Address if Previous Address is Selected
   function fillAddress() {
     var selectedAddressId = document.getElementById("previous_address").value;
-  
     // Find the selected address in the list of previous addresses
     var selectedAddress = previousAddresses.find(function (address) {
       return address.id.toString() === selectedAddressId; // Match as a string
     });
-  
     if (selectedAddress) {
       console.log("Selected Address:", selectedAddress); // Debugging
       document.getElementById("address").value = selectedAddress.address;
@@ -120,9 +120,5 @@
     }
   }
 
-
-
-  
 </script>
-
 {% endblock %}

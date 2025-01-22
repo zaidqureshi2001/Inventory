@@ -143,4 +143,5 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 # settings.py
 SESSION_ENGINE = 'django.contrib.sessions.backends.db'  # This stores sessions in the database
 SESSION_COOKIE_AGE = 3600  # Time in seconds for session expiration
+SESSION_COOKIE_NAME = 'sessionid'
 SESSION_EXPIRE_AT_BROWSER_CLOSE = False  # Keep session active after closing the browser

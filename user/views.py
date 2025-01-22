@@ -419,18 +419,6 @@ def update_cart(request, product_id, action):
 
 import json
 from django.shortcuts import render
-# def checkout(request):  
-#     cart = request.session.get('cart', {})
-#     if not cart:
-#         return redirect('test')
-#     total_price = sum(float(item['price']) * int(item['quantity']) for item in cart.values())
-#     previous_address = ShippingAddress.objects.filter(customer=request.user)
-#     print('hello' ,previous_address)
-#     return render(request, 'dashboard/checkout.html', {
-#         'cart_items': cart,
-#         'total_price': total_price,
-#         'previous_address': previous_address,
-#     })
 import json
 from itertools import groupby
 
@@ -440,6 +428,8 @@ def checkout(request):
     saved_cards = []  # Fetch saved cards from the user profile
     if user.profile.stripe_customer_id:
         saved_cards = stripe.PaymentMethod.list(customer=user.profile.stripe_customer_id, type='card')
+        print(f"Stripe Customer ID: {user.profile.stripe_customer_id}")
+        print('savedCards',saved_cards)
     if not cart:
         return redirect('cart')  # Redirect to cart if no items
     total_price = sum(float(item['price']) * int(item['quantity']) for item in cart.values())
@@ -511,8 +501,30 @@ def myorder(request):
 logger = logging.getLogger(__name__)
 
 
-logger = logging.getLogger(__name__)
+import stripe
+import logging
+from django.shortcuts import redirect
+from django.http import JsonResponse
+from django.views import View
+from django.conf import settings
+from .models import ShippingAddress, Product, User
+from django.urls import reverse
+
+# Set the Stripe API key
 stripe.api_key = settings.STRIPE_SECRET_KEY
+
+# Logger for debugging purposes
+logger = logging.getLogger(__name__)
+
+import stripe
+from django.http import JsonResponse
+from django.shortcuts import redirect
+from django.utils import timezone
+from django.urls import reverse
+from .models import User, ShippingAddress, Product, Order, OrderItem
+
+
+
 class ProcessCheckoutView(View):
     def post(self, request, *args, **kwargs):
         # Extract data from the request
@@ -523,24 +535,28 @@ class ProcessCheckoutView(View):
         state = request.POST.get('state')
         zipcode = request.POST.get('zipcode')
         phone_no = request.POST.get('phone_no')
+        selected_card = request.POST.get('saved_card')
 
         try:
             # Ensure user exists
             user = User.objects.get(email=email)
+            print(f"User found: {user.email}")
         except User.DoesNotExist:
             return JsonResponse({'status': 'failed', 'message': 'User not found'}, status=404)
+
+        # Fetch or create Stripe customer ID
         user_profile = user.profile
-        if user_profile.stripe_customer_id:
-            stripe_customer_id = user_profile.stripe_customer_id
-        else:
-            # Create a new customer in Stripe if not exists
+        stripe_customer_id = user_profile.stripe_customer_id
+
+        if not stripe_customer_id:
+            # Create a new customer in Stripe if one doesn't exist
             stripe_customer = stripe.Customer.create(email=email)
-            # Save the customer ID in your database (e.g., in the User model)
             user_profile.stripe_customer_id = stripe_customer.id
             user_profile.save()
             stripe_customer_id = stripe_customer.id
-        
-        # Create shipping address
+            print(f"New Stripe customer created: {stripe_customer.id}")
+
+        # Create a shipping address
         shipping_address = ShippingAddress.objects.create(
             customer=user,
             address=address,
@@ -549,8 +565,10 @@ class ProcessCheckoutView(View):
             zipcode=zipcode,
             phone_no=phone_no,
         )
-        print(f"Stripe Customer ID: {stripe_customer_id}")  
+        print(f"Shipping address created for {user.email} at {shipping_address.address}")
 
+
+        # Calculate the total price of the cart
         total_price = 0
         cart = request.session.get('cart', {})
         if not cart:
@@ -560,10 +578,101 @@ class ProcessCheckoutView(View):
             try:
                 product = Product.objects.get(id=product_id)
                 total_price += product.price * item['quantity']
+                print(f"Product: {product.name}, Quantity: {item['quantity']}, Price: {product.price}")
             except Product.DoesNotExist:
                 return JsonResponse({'status': 'failed', 'message': f'Product with ID {product_id} does not exist'}, status=404)
 
-        # Create Stripe checkout session
+        print(f"Total cart price: {total_price}")
+        
+        # Handle payment with a saved card
+        if selected_card and selected_card != "new":
+            print(f"Attempting to create payment intent with card ID: {selected_card}")
+            try:
+                # Create PaymentIntent with the saved card
+                payment_intent = stripe.PaymentIntent.create(
+                    amount=int(total_price * 100),  # Convert price to cents
+                    currency='INR',
+                    customer=stripe_customer_id,
+                    payment_method=selected_card,
+                    off_session=True,
+                    confirm=True,
+                )
+                payment_intent_id = payment_intent.id
+                print(f"PaymentIntent created: {payment_intent_id}")
+
+                # Handle payment status
+                print(f"PaymentIntent status: {payment_intent.status}")
+
+                if payment_intent.status == 'requires_action' or payment_intent.status == 'requires_source_action':
+                    return JsonResponse({
+                        'status': 'requires_action',
+                        'message': 'Action required for payment confirmation.',
+                        'payment_intent_client_secret': payment_intent.client_secret
+                    })
+                elif payment_intent.status == 'succeeded':
+                    print('Payment is successful')
+
+                    # Create the order
+                    order = Order.objects.create(
+                        staff=user,
+                        date=timezone.now(),
+                        payment_status='success',
+                        shipping_address=shipping_address
+                    )
+                    
+                    total_price = 0
+                    for product_id, item in cart.items():
+                        try:
+                            product = Product.objects.get(id=product_id)
+                            total_price += product.price * item['quantity']
+
+                            # Create order item
+                            OrderItem.objects.create(
+                                product=product,
+                                quantity=item['quantity'],
+                                order=order
+                            )
+
+                            # Check stock availability
+                            if product.quantity < item['quantity']:
+                                print(f"Not enough stock for product {product.name}")
+                                return JsonResponse({'status': 'failed', 'message': f'Not enough stock for product {product.name}'}, status=400)
+
+                            # Deduct stock
+                            product.quantity -= item['quantity']
+                            product.save()
+
+                        except Product.DoesNotExist:
+                            print(f"Product with ID {product_id} does not exist")
+                            return JsonResponse({'status': 'failed', 'message': f'Product with ID {product_id} does not exist'}, status=404)
+
+                    # Update order total price and save
+                    order.total_price = total_price
+                    order.save()
+                    print(f"Order created successfully for Order ID {order.id}")
+                    if 'cart' in request.session:
+                        del request.session['cart']
+                        request.session.modified = True  # Mark the session as modified
+                        request.session.save()  # Ensure it gets saved
+                        print("Cart cleared in view")
+                    return redirect(reverse('success'))
+                
+
+                else:
+                    print(f"Payment failed with status: {payment_intent.status}")
+                    return JsonResponse({'status': 'failed', 'message': 'Payment failed'}, status=400)
+
+            except stripe.error.CardError as e:
+                print(f"Stripe CardError: {e.user_message}")
+                return JsonResponse({'status': 'failed', 'message': e.user_message}, status=400)
+            except stripe.error.StripeError as e:
+                print(f"General StripeError: {e.user_message}")
+                return JsonResponse({'status': 'failed', 'message': 'An error occurred during payment processing.'}, status=500)
+            except Exception as e:
+                print(f"Unexpected error: {str(e)}")
+                return JsonResponse({'status': 'failed', 'message': 'An unexpected error occurred'}, status=500)
+
+        # Handle new card and create checkout session
         try:
             checkout_session = stripe.checkout.Session.create(
                 payment_method_types=['card'],
@@ -571,7 +680,7 @@ class ProcessCheckoutView(View):
                     'price_data': {
                         'currency': 'INR',
                         'product_data': {'name': f'Order for {email}'},  # Order name as email or user
-                        'unit_amount': int(total_price * 100),
+                        'unit_amount': int(total_price * 100),  # Convert price to cents
                     },
                     'quantity': 1,
                 }],
@@ -582,16 +691,29 @@ class ProcessCheckoutView(View):
                     'cart_data': str(cart),  # Convert cart data into string for metadata
                 },
                 shipping_address_collection={
-                    'allowed_countries': ['IN'],  # Replace 'IN' with appropriate country if needed
+                    'allowed_countries': ['IN'],
                 },
-                success_url=request.build_absolute_uri('/success'),
+                customer=stripe_customer_id,
+                success_url=request.build_absolute_uri('/success'),  # Ensure success URL
                 cancel_url=request.build_absolute_uri('/cancel'),
+                payment_intent_data={
+                'setup_future_usage': 'on_session'  # Save the card for future on-session use
+                },
+                
             )
-        except Exception as e:
-            logger.error(f"Stripe checkout session creation failed: {str(e)}")
-            return JsonResponse({'status': 'failed', 'message': 'Payment session creation failed'}, status=500)
+            
+            print(f"Stripe Checkout session created: {checkout_session.id}") 
+            if 'cart' in request.session:
+                    print(f"Cart before clearing: {request.session['cart']}")
+                    del request.session['cart']
+                    request.session.save()  # Save the session after clearing the cart
+                    request.session.modified = True
 
-        return redirect(checkout_session.url, code=303)
+            # Redirect to the checkout session URL
+            return redirect(checkout_session.url, code=303)
+        except Exception as e:
+            print(f"Stripe checkout session creation failed: {str(e)}")
+                    # Clear the cart after order creation      return JsonResponse({'status': 'failed', 'message': 'Payment session creation failed'}, status=500)
 
 
 @csrf_exempt
@@ -605,35 +727,25 @@ def payment_webhook(request):
                 payload, request.headers.get('Stripe-Signature'), endpoint_secret
             )
         except ValueError as e:
-            logger.error(f"Invalid payload: {str(e)}")
+            print(f"Invalid payload: {str(e)}")
             return JsonResponse({'status': 'failed', 'message': 'Invalid payload'}, status=400)
         except stripe.error.SignatureVerificationError as e:
-            logger.error(f"Invalid signature: {str(e)}")
+            print(f"Invalid signature: {str(e)}")
             return JsonResponse({'status': 'failed', 'message': 'Invalid signature'}, status=400)
-
-        # Log the entire event for debugging
-        logger.info(f"Stripe webhook event received: {event}")
 
         # Handle Stripe event
         event_type = event.get('type')
         event_data = event['data']['object']
 
-        logger.info(f"Processing event type: {event_type}")
-
         if event_type == 'checkout.session.completed':
-            logger.info("Checkout session completed event received")
-
-            # Log the metadata for debugging
+            print("Checkout session completed event received")
             metadata = event_data.get('metadata', {})
-            logger.info(f"Metadata: {metadata}")
-              
-            # Extract user and cart data from metadata
             user_id = metadata.get('user_id')
             shipping_address_id = metadata.get('shipping_address_id')
             cart_data = metadata.get('cart_data')
 
             if not user_id or not shipping_address_id or not cart_data:
-                logger.error("Missing necessary metadata fields (user_id, shipping_address_id, or cart_data)")
+                print("Missing necessary metadata fields (user_id, shipping_address_id, or cart_data)")
                 return JsonResponse({'status': 'failed', 'message': 'Missing metadata fields'}, status=400)
 
             # Retrieve the user and shipping address
@@ -641,281 +753,91 @@ def payment_webhook(request):
                 user = User.objects.get(id=user_id)
                 shipping_address = ShippingAddress.objects.get(id=shipping_address_id)
                 cart = eval(cart_data)  # Rebuild cart data from string
+                print(f"Cart data: {cart}")
             except Exception as e:
-                logger.error(f"Error retrieving user or shipping address: {str(e)}")
+                print(f"Error retrieving user or shipping address: {str(e)}")
                 return JsonResponse({'status': 'failed', 'message': 'Error retrieving user data'}, status=500)
 
-            # Create the order after successful payment
-            order = Order.objects.create(
-                staff=user,
-                date=timezone.now(),
-                payment_status='success',
-                shipping_address=shipping_address
-            )
+            # Fetch the payment intent from Stripe
+            payment_intent_id = event_data.get('payment_intent')
+            try:
+                payment_intent = stripe.PaymentIntent.retrieve(payment_intent_id)
+            except stripe.error.StripeError as e:
+                print(f"Error retrieving payment intent: {str(e)}")
+                return JsonResponse({'status': 'failed', 'message': 'Error retrieving payment intent'}, status=500)
+            print(f"Cart before clearing: {request.session.get('cart')}")
+            if payment_intent.status == 'succeeded':
+                print("payment intent succeeded")
+                print(f"Cart before clearing in intent: {request.session.get('cart')}")
+                # Create the order after successful payment
+                order = Order.objects.create(
+                    staff=user,
+                    date=timezone.now(),
+                    payment_status='success',
+                    shipping_address=shipping_address
+                )
+                
 
-            total_price = 0
-            # Process cart items
-            for product_id, item in cart.items():
-                try:
-                    product = Product.objects.get(id=product_id)
-                    total_price += product.price * item['quantity']
+                total_price = 0
+                for product_id, item in cart.items():
+                    try:
+                        product = Product.objects.get(id=product_id)
+                        total_price += product.price * item['quantity']
 
-                    # Create order item
-                    OrderItem.objects.create(
-                        product=product,
-                        quantity=item['quantity'],
-                        order=order
-                    )
-                    if product.quantity < item['quantity']:
-                        return JsonResponse({'status': 'failed', 'message': f'Not enough stock for product {product.name}'}, status=400)
-                    product.quantity -= item['quantity']
-                    product.save()
-                except Product.DoesNotExist:
-                    logger.error(f"Product with ID {product_id} does not exist")
-                    return JsonResponse({'status': 'failed', 'message': f'Product with ID {product_id} does not exist'}, status=404)
+                        # Create order item
+                        OrderItem.objects.create(
+                            product=product,
+                            quantity=item['quantity'],
+                            order=order
+                        )
 
-            # Update order total price
-            order.total_price = total_price
-            order.save()
-            logger.info(f"Order created successfully for Order ID {order.id}")
-            
-            cart = request.session.get('cart')
-            print(f"Cart before clearing: {cart}")    
-            if 'cart' in request.session:
-                del request.session['cart']
-                request.session.save() 
-                request.session.modified = True
-                print(f"Cart cleared for user: {user.email}")
+                        # Check stock availability
+                        if product.quantity < item['quantity']:
+                            print(f"Not enough stock for product {product.name}")
+                            return JsonResponse({'status': 'failed', 'message': f'Not enough stock for product {product.name}'}, status=400)
+
+                        # Deduct stock
+                        product.quantity -= item['quantity']
+                        product.save()
+
+                    except Product.DoesNotExist:
+                        print(f"Product with ID {product_id} does not exist")
+                        return JsonResponse({'status': 'failed', 'message': f'Product with ID {product_id} does not exist'}, status=404)
+
+                # Update order total price and save
+                order.total_price = total_price
+                order.save()
+                if 'cart' in request.session:
+                    print(f"Cart before clearing: {request.session['cart']}")
+                    del request.session['cart']
+                    request.session.save()  # Save the session after clearing the cart
+                    request.session.modified = True
+                    print("Cart cleared in webhook.")
+                else:
+                    print("No cart to clear in session.")
+                
+                return JsonResponse({'status': 'success', 'message': 'Order created successfully'}, status=200)
             else:
-                print("No cart is cleared")
-            cart_after = request.session.get('cart')
-            print(f"Cart before clearing: {cart_after}") 
-        elif event_type == 'payment_intent.succeeded':
-            logger.info("Payment succeeded for PaymentIntent")
-        else:
-            logger.info(f"Unhandled event type: {event_type}")
+                print(f"Payment failed with status {payment_intent.status}")
+                return JsonResponse({'status': 'failed', 'message': 'Payment failed'}, status=400)
 
-        return JsonResponse({'status': 'success'}, status=200)
+        # Handle other event types if needed
+        return JsonResponse({'status': 'success', 'message': 'Event handled successfully'}, status=200)
 
-    return JsonResponse({'status': 'failed', 'message': 'Invalid request method'}, status=400)
+    # If the request is not a POST request, return a method not allowed response
+    return JsonResponse({'status': 'failed', 'message': 'Method not allowed'}, status=405)
 
-# class ProcessCheckoutView(View):
-#     def post(self, request, *args, **kwargs):
-#         # Extract data from the request
-#         name = request.POST.get('name')
-#         email = request.POST.get('email')
-#         address = request.POST.get('address')
-#         city = request.POST.get('city')
-#         state = request.POST.get('state')
-#         zipcode = request.POST.get('zipcode')
-#         phone_no = request.POST.get('phone_no')
-#         payment_method_id = request.POST.get('payment_method_id')
-#         saved_card_id = request.POST.get('saved_card_id')
-#         # print("Request Data:", request.POST)
-#         try:
-#             # Ensure user exists
-#             user = User.objects.get(email=email)
-#         except User.DoesNotExist:
-#             return JsonResponse({'status': 'failed', 'message': 'User not found'}, status=404)
-#         user_profile = user.profile
-
-#         if user_profile.stripe_customer_id:
-#             stripe_customer_id = user_profile.stripe_customer_id
-#         else:
-#             # Create a new customer in Stripe if not exists
-#             stripe_customer = stripe.Customer.create(email=email)
-#             # Save the customer ID in your database (e.g., in the User model)
-#             user_profile.stripe_customer_id = stripe_customer.id
-#             user_profile.save()
-#             stripe_customer_id = stripe_customer.id
-#         if not payment_method_id and not saved_card_id:
-#             return JsonResponse({'status': 'failed', 'message': 'No payment method or saved card provided'}, status=400)
-#         if saved_card_id:
-#             pass
-#             # If a saved card is selected, use that card ID for the payment
-#             payment_method_to_use = saved_card_id
-#         elif payment_method_id:
-#             # If no saved card is selected, use a new payment method
-#             stripe.PaymentMethod.attach(payment_method_id, customer=stripe_customer_id)
-#             stripe.Customer.modify(stripe_customer_id, invoice_settings={'default_payment_method': payment_method_id})
-#             payment_method_to_use = payment_method_id
-#         else:
-#             return JsonResponse({'status': 'failed', 'message': 'No payment method provided'}, status=400)
-
-#         # Create shipping address
-#         shipping_address = ShippingAddress.objects.create(
-#             customer=user,
-#             address=address,
-#             city=city,
-#             state=state,
-#             zipcode=zipcode,
-#             phone_no=phone_no,
-#         )
-
-#         total_price = 0
-#         cart = request.session.get('cart', {})
-#         if not cart:
-#             return JsonResponse({'status': 'failed', 'message': 'Cart is empty or missing'}, status=400)
-
-#         for product_id, item in cart.items():
-#             try:
-#                 product = Product.objects.get(id=product_id)
-#                 total_price += product.price * item['quantity']
-#             except Product.DoesNotExist:
-#                 return JsonResponse({'status': 'failed', 'message': f'Product with ID {product_id} does not exist'}, status=404)
-
-#         # Create Stripe checkout session
-#         try:
-#             checkout_session = stripe.checkout.Session.create(
-#                   # Use the selected saved card or new payment method
-#                 payment_method_types=['card'],
-#                 line_items=[{
-#                     'price_data': {
-#                         'currency': 'INR',
-#                         'product_data': {'name': f'Order for {email}'},  # Order name as email or user
-#                         'unit_amount': int(total_price * 100),
-#                     },
-#                     'quantity': 1,
-#                 }],
-#                 mode='payment',
-#                 metadata={
-#                     'user_id': user.id,
-#                     'shipping_address_id': shipping_address.id,
-#                     'cart_data': str(cart),  # Convert cart data into string for metadata
-#                 },
-#                 shipping_address_collection={
-#                     'allowed_countries': ['IN'],  # Replace 'IN' with appropriate country if needed
-#                 },
-#                 success_url=request.build_absolute_uri('/success'),
-#                 cancel_url=request.build_absolute_uri('/cancel'),
-#                 payment_method=payment_method_to_use,
-#             )
-#         except Exception as e:
-#             logger.error(f"Stripe checkout session creation failed: {str(e)}")
-#             return JsonResponse({'status': 'failed', 'message': 'Payment session creation failed'}, status=500)
-
-#         return JsonResponse({'status': 'success', 'checkout_url': checkout_session.url})
-
-
-
-
-# @csrf_exempt
-# def payment_webhook(request):
-#     if request.method == 'POST':
-#         payload = request.body
-#         endpoint_secret = settings.STRIPE_WEBHOOK_SECRET
-#         try:
-#             # Verify Stripe signature
-#             event = stripe.Webhook.construct_event(
-#                 payload, request.headers.get('Stripe-Signature'), endpoint_secret
-#             )
-#         except ValueError as e:
-#             logger.error(f"Invalid payload: {str(e)}")
-#             return JsonResponse({'status': 'failed', 'message': 'Invalid payload'}, status=400)
-#         except stripe.error.SignatureVerificationError as e:
-#             logger.error(f"Invalid signature: {str(e)}")
-#             return JsonResponse({'status': 'failed', 'message': 'Invalid signature'}, status=400)
-
-#         # Log the entire event for debugging
-#         logger.info(f"Stripe webhook event received: {event}")
-
-#         # Handle Stripe event
-#         event_type = event.get('type')
-#         event_data = event['data']['object']
-
-#         logger.info(f"Processing event type: {event_type}")
-
-#         if event_type == 'checkout.session.completed':
-#             logger.info("Checkout session completed event received")
-
-#             # Log the metadata for debugging
-#             metadata = event_data.get('metadata', {})
-#             logger.info(f"Metadata: {metadata}")
-
-#             # Extract user and cart data from metadata
-#             user_id = metadata.get('user_id')
-#             shipping_address_id = metadata.get('shipping_address_id')
-#             cart_data = metadata.get('cart_data')
-
-#             if not user_id or not shipping_address_id or not cart_data:
-#                 logger.error("Missing necessary metadata fields (user_id, shipping_address_id, or cart_data)")
-#                 return JsonResponse({'status': 'failed', 'message': 'Missing metadata fields'}, status=400)
-
-#             # Retrieve the user and shipping address
-#             try:
-#                 user = User.objects.get(id=user_id)
-#                 shipping_address = ShippingAddress.objects.get(id=shipping_address_id)
-#                 cart = eval(cart_data)  # Rebuild cart data from string
-#             except Exception as e:
-#                 logger.error(f"Error retrieving user or shipping address: {str(e)}")
-#                 return JsonResponse({'status': 'failed', 'message': 'Error retrieving user data'}, status=500)
-
-#             # Create the order after successful payment
-#             order = Order.objects.create(
-#                 staff=user,
-#                 date=timezone.now(),
-#                 payment_status='success',
-#                 shipping_address=shipping_address
-#             )
-
-#             total_price = 0
-#             # Process cart items
-#             for product_id, item in cart.items():
-#                 try:
-#                     product = Product.objects.get(id=product_id)
-#                     total_price += product.price * item['quantity']
-
-#                     # Create order item
-#                     OrderItem.objects.create(
-#                         product=product,
-#                         quantity=item['quantity'],
-#                         order=order
-#                     )
-#                     if product.quantity < item['quantity']:
-#                         return JsonResponse({'status': 'failed', 'message': f'Not enough stock for product {product.name}'}, status=400)
-#                     product.quantity -= item['quantity']
-#                     product.save()
-#                 except Product.DoesNotExist:
-#                     logger.error(f"Product with ID {product_id} does not exist")
-#                     return JsonResponse({'status': 'failed', 'message': f'Product with ID {product_id} does not exist'}, status=404)
-
-#             # Update order total price
-#             order.total_price = total_price
-#             order.save()
-#             logger.info(f"Order created successfully for Order ID {order.id}")
-
-#             # Save the payment method as a "saved card"
-#             payment_method_id = event_data.get('payment_method')  # Get the payment method from the event data
-#             if payment_method_id:
-#                 # Save the card to the user's profile
-#                 stripe_payment_method = stripe.PaymentMethod.retrieve(payment_method_id)
-#                 user_profile = user.profile
-#                 user_profile.stripe_payment_method_id = payment_method_id
-#                 print("methodid" ,user_profile.stripe_payment_method_id)
-#                 user_profile.save()
-
-#             # Clear cart from the session
-#             cart = request.session.get('cart')
-#             if 'cart' in request.session:
-#                 del request.session['cart']
-#                 request.session.save()
-#                 request.session.modified = True
-
-#         elif event_type == 'payment_intent.succeeded':
-#             logger.info("Payment succeeded for PaymentIntent")
-#             payment_method_id = event_data.get('payment_method')  # Get the payment method ID
-#             if payment_method_id:
-#                 # Save the payment method to the user's profile
-#                 stripe_payment_method = stripe.PaymentMethod.retrieve(payment_method_id)
-#                 user_profile = user.profile
-#                 user_profile.stripe_payment_method_id = payment_method_id
-#                 user_profile.save()
-
-#         return JsonResponse({'status': 'success'}, status=200)
-
-#     return JsonResponse({'status': 'failed', 'message': 'Invalid request method'}, status=400)
-
-
+def saved_cards(request):
+    user = request.user
+    stripe_customer_id = user.profile.stripe_customer_id
+    if not stripe_customer_id:
+        return JsonResponse({'status': 'failed', 'message': 'No Stripe customer found'}, status=404)
+    payment_methods = stripe.PaymentMethod.list(
+        customer=stripe_customer_id,
+        type='card'
+    )
+    print('payment_methods' ,payment_methods)
+    return JsonResponse({'status': 'success', 'payment_methods': payment_methods['data']})
 
 def success(request):
     
@@ -923,8 +845,6 @@ def success(request):
         'payment_status': 'success'
     }
     return render(request, 'dashboard/success.html', context)
-
-
 
 def cancel(request):
     context = {
