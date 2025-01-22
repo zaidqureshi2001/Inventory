@@ -840,7 +840,6 @@ def saved_cards(request):
     return JsonResponse({'status': 'success', 'payment_methods': payment_methods['data']})
 
 def success(request):
-    
     context = {
         'payment_status': 'success'
     }
