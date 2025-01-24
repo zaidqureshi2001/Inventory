@@ -30,6 +30,6 @@ urlpatterns = [
     path('stripe/webhook/', views.payment_webhook, name='payment_webhook'),
     path('myorder/', views.myorder, name='myorder'),
     path('Lowstock/' , views.Lowstock  , name='Lowstock'),
-    path('saved_cards/' , views.saved_cards  , name='saved_cards'),
+    # path('saved_cards/' , views.saved_cards  , name='saved_cards'),
     path('get-order-data/', views.get_order_data, name='get_order_data'),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

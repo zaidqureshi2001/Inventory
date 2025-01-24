@@ -24,6 +24,14 @@ from collections import defaultdict
 from django.http import JsonResponse
 from datetime import datetime, timedelta
 from collections import defaultdict
+import json
+from django.shortcuts import render
+import json
+from itertools import groupby
+import json
+from django.shortcuts import render, redirect
+import stripe
+
 
 def register(request):
     if request.method == 'POST':
@@ -415,26 +423,31 @@ def update_cart(request, product_id, action):
     
     return JsonResponse({'success': False})
 
-import json
-from django.shortcuts import render
-import json
-from itertools import groupby
 
 def checkout(request):
     cart = request.session.get('cart', {})
     user = request.user
-    saved_cards = []  # Fetch saved cards from the user profile
+    saved_cards = []  # Fetch saved cards from the user's Stripe profile
     if user.profile.stripe_customer_id:
         saved_cards = stripe.PaymentMethod.list(customer=user.profile.stripe_customer_id, type='card')
-        print(f"Stripe Customer ID: {user.profile.stripe_customer_id}")
-        print('savedCards',saved_cards)
+
     if not cart:
-        return redirect('cart')  # Redirect to cart if no items
+        return redirect('cart')  # Redirect to cart if there are no items
+
+    # Remove duplicate cards based on their `last4`
+    unique_cards = {}
+    for card in saved_cards:
+        last4 = card.card.last4
+        if last4 not in unique_cards:
+            unique_cards[last4] = card
+
     total_price = sum(float(item['price']) * int(item['quantity']) for item in cart.values())
+
+    # Get unique previous addresses
     previous_address = ShippingAddress.objects.filter(customer=request.user)
-    # Ensure unique addresses based on their content (e.g., address field)
     unique_addresses = list({address.address: address for address in previous_address}.values())
-    # Serialize previous addresses to JSON format
+
+    # Serialize previous addresses for JSON usage
     previous_address_json = json.dumps([{
         'id': address.id,
         'address': address.address,
@@ -445,7 +458,7 @@ def checkout(request):
     } for address in unique_addresses])
     
     return render(request, 'dashboard/checkout.html', {
-        'saved_cards': saved_cards,
+        'saved_cards': unique_cards.values(),  # Pass unique cards
         'cart_items': cart,
         'total_price': total_price,
         'previous_address_json': previous_address_json,
@@ -670,7 +683,7 @@ class ProcessCheckoutView(View):
                 print(f"Unexpected error: {str(e)}")
                 return JsonResponse({'status': 'failed', 'message': 'An unexpected error occurred'}, status=500)
 
-        # Handle new card and create checkout session
+    
         try:
             checkout_session = stripe.checkout.Session.create(
                 payment_method_types=['card'],
@@ -775,9 +788,6 @@ def payment_webhook(request):
                     shipping_address=shipping_address
                     
                 )
-                
-                
-
                 total_price = 0
                 for product_id, item in cart.items():
                     try:
@@ -827,17 +837,17 @@ def payment_webhook(request):
     # If the request is not a POST request, return a method not allowed response
     return JsonResponse({'status': 'failed', 'message': 'Method not allowed'}, status=405)
 
-def saved_cards(request):
-    user = request.user
-    stripe_customer_id = user.profile.stripe_customer_id
-    if not stripe_customer_id:
-        return JsonResponse({'status': 'failed', 'message': 'No Stripe customer found'}, status=404)
-    payment_methods = stripe.PaymentMethod.list(
-        customer=stripe_customer_id,
-        type='card'
-    )
-    print('payment_methods' ,payment_methods)
-    return JsonResponse({'status': 'success', 'payment_methods': payment_methods['data']})
+# def saved_cards(request):
+#     user = request.user
+#     stripe_customer_id = user.profile.stripe_customer_id
+#     if not stripe_customer_id:
+#         return JsonResponse({'status': 'failed', 'message': 'No Stripe customer found'}, status=404)
+#     payment_methods = stripe.PaymentMethod.list(
+#         customer=stripe_customer_id,
+#         type='card'
+#     )
+#     print('payment_methods' ,payment_methods)
+#     return JsonResponse({'status': 'success', 'payment_methods': payment_methods['data']})
 
 def success(request):
     context = {
