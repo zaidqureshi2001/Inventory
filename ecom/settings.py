@@ -145,3 +145,7 @@ SESSION_ENGINE = 'django.contrib.sessions.backends.db'  # This stores sessions i
 SESSION_COOKIE_AGE = 3600  # Time in seconds for session expiration
 SESSION_COOKIE_NAME = 'sessionid'
 SESSION_EXPIRE_AT_BROWSER_CLOSE = False  # Keep session active after closing the browser
+# settings.py
+
+TIME_ZONE = 'Asia/Kolkata'
+USE_TZ = True

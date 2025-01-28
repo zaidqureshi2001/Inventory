@@ -28,7 +28,7 @@ class Order(models.Model):
     staff = models.ForeignKey(User, on_delete=models.CASCADE, null=True)
     order_quantity = models.PositiveIntegerField(null=True)
     date = models.DateTimeField(auto_now_add=True)
-    created_at = models.DateTimeField(default=timezone.now)
+    created_at = models.DateTimeField(auto_now_add=True)
     payment_status = models.CharField(
         max_length=20, choices=[('success', 'Success'), ('failed', 'Failed')],
         default='failed'

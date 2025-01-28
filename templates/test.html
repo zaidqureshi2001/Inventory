@@ -2,65 +2,92 @@
 {% block title %}
   Dashboard
 {% endblock %}
+
 {% block content %}
   {% if user.is_authenticated and user.is_staff %}
     <div class="container">
       <div class="row my-5">
+        <!-- Line Chart - Day by Day Order Count -->
         <div class="col-md-6">
           <div class="bg-white p-3">
-            <h4>Order Chart - Day by Day Increase</h4>
-            <canvas id="myLineChart" width="400" height="300"></canvas>
+            <h4>Order Chart - Day by Day Count</h4>
+            <canvas id="myLineChart" width="400" height="300" style="width: 100%; max-width: 600px;"></canvas>
+            <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
             <script>
-              var ctx = document.getElementById('myLineChart').getContext('2d');
-              var myLineChart = new Chart(ctx, {
-                type: 'line',
-                data: {
-                  labels: ['{{ date }}'],
-                  datasets: [{
-                    label: 'Orders Items Per Day',
-                    data: [{{ quantity }}],
-                    fill: false,
-                    borderColor: 'rgba(75, 192, 192, 1)',
-                    tension: 0.1
-                  }]
-                },
-                options: {
-                  responsive: true,
-                  plugins: {
-                    legend: {
-                      position: 'top',
-                    },
-                    tooltip: {
-                      callbacks: {
-                        label: function(tooltipItem) {
-                          return 'Orders: ' + tooltipItem.raw;
+              window.onload = function() {
+                var ctx = document.getElementById('myLineChart').getContext('2d');
+                var myLineChart = new Chart(ctx, {
+                  type: 'line',
+                  data: {
+                    labels: [{% for date in order_dates %}'{{ date }}'{% if not forloop.last %},{% endif %}{% endfor %}],  // Order dates
+                    datasets: [{
+                      label: 'Orders per Day',
+                      data: [{% for quantity in order_quantities %}{{ quantity }}{% if not forloop.last %},{% endif %}{% endfor %}],  // Order quantities
+                      fill: false,
+                      borderColor: 'rgba(75, 192, 192, 1)',
+                      tension: 0.1
+                    }]
+                  },
+                  options: {
+                    responsive: true,
+                    plugins: {
+                      legend: {
+                        position: 'top',
+                      },
+                      tooltip: {
+                        callbacks: {
+                          label: function(tooltipItem) {
+                            return 'Orders: ' + tooltipItem.raw;
+                          }
                         }
                       }
-                    }
-                  },
-                  scales: {
-                    y: {
-                      beginAtZero: true
+                    },
+                    scales: {
+                      y: {
+                        beginAtZero: true
+                      }
                     }
                   }
+                });
+
+                // Fetch and update chart data every 5 seconds
+                function updateChart() {
+                  fetch('/get-order-data/')
+                    .then(response => response.json())
+                    .then(data => {
+                      console.log('Fetched Data:', data);  // Log fetched data to check structure
+                      if (data.dates.length > 0 && data.counts.length > 0) {
+                        myLineChart.data.labels = data.dates;  // Populate labels from fetched data    // ["2025-01-27" , "2025-01-28" ,"2025-01-29"] add these to  test
+                        myLineChart.data.datasets[0].data = data.counts;  // Populate data points       // [1 ,10]   add these to test
+                        myLineChart.update();
+                        console.log("hi")
+                        console.log(data.dates)
+                        console.log(data.counts)
+                      } 
+                    })
+                    .catch(error => console.error('Error fetching data:', error));
                 }
-              });
+
+                updateChart();  // Initial chart update
+                setInterval(updateChart, 5000);  // Update every 5 seconds
+              };
             </script>
           </div>
         </div>
 
+        <!-- Bar Chart - Product Quantities -->
         <div class="col-md-6">
           <div class="bg-white p-3">
-            <canvas id="myChart" width="400" height="300"></canvas>
+            <canvas id="myChart" width="400" height="300" style="width: 100%; max-width: 600px;"></canvas>
             <script>
               var ctx = document.getElementById('myChart').getContext('2d');
               var myChart = new Chart(ctx, {
                 type: 'bar',
                 data: {
-                  labels: [{% for product in product %}'{{ product.name }}',{% endfor %}],
+                  labels: [{% for product in product %}'{{ product.name }}'{% if not forloop.last %},{% endif %}{% endfor %}],
                   datasets: [{
                     label: 'Products',
-                    data: [{% for product in product %}{{ product.quantity }},{% endfor %}],
+                    data: [{% for product in product %}{{ product.quantity }}{% if not forloop.last %},{% endif %}{% endfor %}],
                     backgroundColor: [
                       'rgba(255, 99, 132, 1)', 'rgba(54, 162, 235, 1)', 'rgba(255, 206, 86, 1)', 
                       'rgba(75, 192, 192, 1)', 'rgba(153, 102, 255, 1)', 'rgba(255, 159, 64, 1)'
@@ -99,74 +126,112 @@
       </div>
     </div>
   {% else %}
-    {% for message in messages %}
-      <div class="alert alert-success" role="alert">
-        <p id="messages">{{ message }}</p>
+  <div class="">
+    <div class="">
+      <!-- Carousel with dynamic product images and fade effect -->
+      <div id="carouselExampleFade" class="carousel slide carousel-fade" data-bs-ride="carousel">
+        <div class="carousel-inner">
+          {% for product in product %}
+            <div class="carousel-item {% if forloop.first %}active{% endif %}">
+              <!-- Check if product has an image, else use a default image -->
+              {% if product.image %}
+                <img src="{{ product.image.url }}" class="d-block w-100" alt="{{ product.name }}">
+              {% else %}
+                <img src="/media/product_images/default_image.jpg" class="d-block w-100" alt="No image available">
+              {% endif %}
+            </div>
+          {% endfor %}
+        </div>
+
+        <!-- Carousel controls -->
+        <button class="carousel-control-prev " type="button" data-bs-target="#carouselExampleFade" data-bs-slide="prev">
+          <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+          <span class="visually-hidden">Previous</span>
+        </button>
+        <button class="carousel-control-next" type="button" data-bs-target="#carouselExampleFade" data-bs-slide="next">
+          <span class="carousel-control-next-icon" aria-hidden="true"></span>
+          <span class="visually-hidden">Next</span>
+        </button>
       </div>
-    {% endfor %}
-    <div class="container mt-5">
-      <div class="cont_2">
-        <div class="card_1">
-          <!-- Product cards grid -->
-          <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 g-4">
-            {% for product in product %}
-              <div class="col">
-                <div class="card shadow-lg border-light rounded">
-                  <!-- Product Image -->
+
+      <!-- Product Cards Grid -->
+      <div class="container mx-auto py-8">
+        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
+          {% for product in product %}
+            <div class="bg-white shadow-lg rounded-lg overflow-hidden group transform hover:scale-105 transition-all duration-300 ease-in-out ">
+              
+              <!-- Product Image Section -->
+              <div class="relative">
+                <a href="{% url 'product_detail' product.id %}" class="block no-underline">
                   {% if product.image %}
-                    <img src="{{ product.image.url }}" class="card-img-top" alt="{{ product.name }}" />
+                    <img src="{{ product.image.url }}" class="w-full h-64 object-cover rounded-t-lg" alt="{{ product.name }}">
                   {% else %}
-                    <img src="/media/product_images/default_image.jpg" class="card-img-top" alt="No image available" />
+                    <img src="/media/product_images/default_image.jpg" class="w-full h-64 object-cover rounded-t-lg" alt="No image available">
                   {% endif %}
-                  <div class="card-body">
-                    <h5 class="card-title text-truncate" style="max-width: 100%;">{{ product.name }}</h5>
-                    <h6 class="card-subtitle mb-2 text-muted">{{ product.category }}</h6
-                    <p class="card-text">
-                      <strong>Price:</strong> ₹{{ product.price }}
-                    </p>
-                    <p class="card-text" style="max-height: 75px; overflow: hidden;">
-                      <strong>Description:</strong> {{ product.description }}
-                    </p>
-                    <!-- Display stock status -->
-                    {% if product.quantity == 0 %}
-                      <p class="text-danger">Out of stock</p>
-                    {% elif product.quantity < 10 %}
-                      <p class="text-warning">Product will be out of stock soon</p>
-                    {% else %}
-                      <p class="text-success">Product is available</p>
-                    {% endif %}
-                    <form action="{% url 'addto_cart' product.id %}" method="POST">
-                      {% csrf_token %}
-                      <button class="btn btn-primary btn-block" {% if product.quantity == 0 %}disabled="disabled"{% endif %}>
-                        Add to Cart
-                      </button>
-                    </form>
-                  </div>
-                </div>
+                </a>
               </div>
-            {% endfor %}
-          </div>
+      
+              <!-- Product Info Section -->
+              <div class="p-4">
+                <!-- Product Name -->
+                <h5 class="text-xl font-semibold text-black truncate no-underline text-black">
+                  <a href="{% url 'product_detail' product.id %}" class="no-underline text-black">{{ product.name }}</a>
+                </h5>
+      
+                <!-- Product Category -->
+                <h6 class="text-sm text-gray-600">{{ product.category }}</h6>
+      
+                <!-- Product Description -->
+                <p class="text-sm text-gray-700 ">
+                  {{ product.description|slice:":80" }}...<a href="{% url 'product_detail' product.id %}" class="no-underline">Read More</a>
+                </p>
+      
+                <!-- Star Rating -->
+                <div class="flex items-center mt-2">
+                  <svg class="w-5 h-5 text-yellow-500" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
+                    <path d="M10 15l-3.09 1.636L7.636 11l-3.91-3.05L7.364 6h5.272l2.238 1.95L12.364 11l1.728 5.636L10 15z"></path>
+                </svg>
+                <svg class="w-5 h-5 text-yellow-500" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
+                    <path d="M10 15l-3.09 1.636L7.636 11l-3.91-3.05L7.364 6h5.272l2.238 1.95L12.364 11l1.728 5.636L10 15z"></path>
+                </svg>
+                <svg class="w-5 h-5 text-yellow-500" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
+                    <path d="M10 15l-3.09 1.636L7.636 11l-3.91-3.05L7.364 6h5.272l2.238 1.95L12.364 11l1.728 5.636L10 15z"></path>
+                </svg>
+                <svg class="w-5 h-5 text-yellow-500" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
+                    <path d="M10 15l-3.09 1.636L7.636 11l-3.91-3.05L7.364 6h5.272l2.238 1.95L12.364 11l1.728 5.636L10 15z"></path>
+                </svg>
+                <svg class="w-5 h-5 text-gray-300" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
+                    <path d="M10 15l-3.09 1.636L7.636 11l-3.91-3.05L7.364 6h5.272l2.238 1.95L12.364 11l1.728 5.636L10 15z"></path>
+                </svg>
+                </div>
+      
+                <!-- Product Price -->
+                <div class="flex items-center space-x-2 mt-2">
+                  <p class="text-lg font-semibold ">₹{{ product.price }}</p>
+                  <p class="text-sm text-gray-500 line-through">₹900</p>
+              </div>
+      
+                <!-- Stock Status -->
+                {% if product.quantity == 0 %}
+                  <p class="text-sm text-red-600 mt-2">Out of stock</p>
+                {% elif product.quantity < 10 %}
+                  <p class="text-sm text-yellow-600 mt-2">Only {{ product.quantity }} left in stock</p>
+                {% endif %}
+      
+                <!-- Add to Cart Form -->
+                <form action="{% url 'addto_cart' product.id %}" method="POST" class="mt-4">
+                  {% csrf_token %}
+                  <button class="w-full py-2 px-4 bg-indigo-600 text-white font-semibold rounded-lg disabled:opacity-50" {% if product.quantity == 0 %}disabled{% endif %}>
+                    <i class="fa-solid fa-cart-shopping"></i> Add
+                  </button>
+                </form>
+              </div>
+            </div>
+          {% endfor %}
         </div>
       </div>
+      
     </div>
+</div>
   {% endif %}
-  <script>
-
-    function updateChart() {
-      fetch('/get-order-data/')
-        .then(response => response.json())
-        .then(data => {
-          console.log(data)
-          myLineChart.data.labels = data.dates;
-          myLineChart.data.datasets[0].data = data.quantities;
-          myLineChart.update();  // Re-render the chart
-        })
-        .catch(error => console.error('Error fetching data:', error));
-    }
-  
-    // Update the chart every 5 seconds
-    setInterval(updateChart, 5000);
-  </script>
-  
-  
 {% endblock %}

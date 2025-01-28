@@ -1,0 +1,54 @@
+<!-- product_detail.html -->
+{% extends 'partials/base.html' %}
+{% block title %}{{ product.name }} - Product Details{% endblock %}
+{% block content %}
+<div class="container my-5">
+    <div class="row">
+        <!-- Product Image -->
+        <div class="col-md-6">
+            <img src="{{ product.image.url }}" class="img-fluid" alt="{{ product.name }}">
+            <form action="{% url 'addto_cart' product.id %}" method="POST" class="mt-4">
+                {% csrf_token %}
+                <button class="btn btn-primary w-full" {% if product.quantity == 0 %}disabled{% endif %}><i class="fa-solid fa-cart-shopping"></i> Add to Cart
+                </button>
+            </form>
+        </div>
+        <!-- Product Info -->
+        <div class="col-md-6">
+            <h2>{{ product.name }}</h2>
+            <p class="text-muted">{{ product.category }}</p>  
+            <p class="mt-6 text-xl"><strong>Description:</strong> {{ product.description }}</p>
+            <!-- Star Rating -->
+            <div class="flex items-center mt-2 ">
+                <!-- Example Star Rating (You can customize this based on your actual rating system) -->
+              
+                        <svg class="w-7 h-7 text-yellow-500" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
+                            <path d="M10 15l-3.09 1.636L7.636 11l-3.91-3.05L7.364 6h5.272l2.238 1.95L12.364 11l1.728 5.636L10 15z"></path>
+                        </svg>
+           
+                        <svg class="w-7 h-7 text-gray-300" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
+                            <path d="M10 15l-3.09 1.636L7.636 11l-3.91-3.05L7.364 6h5.272l2.238 1.95L12.364 11l1.728 5.636L10 15z"></path>
+                        </svg>
+                        <svg class="w-7 h-7 text-gray-300" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
+                            <path d="M10 15l-3.09 1.636L7.636 11l-3.91-3.05L7.364 6h5.272l2.238 1.95L12.364 11l1.728 5.636L10 15z"></path>
+                        </svg>
+                        <svg class="w-7 h-7 text-gray-300" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
+                            <path d="M10 15l-3.09 1.636L7.636 11l-3.91-3.05L7.364 6h5.272l2.238 1.95L12.364 11l1.728 5.636L10 15z"></path>
+                        </svg>
+                    </div>
+            <!-- Product Price (with offer) -->
+
+            <div class="flex items-center space-x-2 mt-4">
+                <p class="text-lg font-semibold text-3xl">₹900</p>
+                <p class="text-sm text-gray-500 line-through text-2xl">₹{{ product.price }}</p>
+            </div>
+            <!-- Stock Status -->
+            {% if product.quantity == 0 %}
+                <p class="text-danger">Out of stock</p>
+            {% elif product.quantity < 10 %}
+                <p class="text-warning">Only {{ product.quantity }} left in stock</p>
+            {% endif%}
+        </div>
+    </div>
+</div>
+{% endblock %}

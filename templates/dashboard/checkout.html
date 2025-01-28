@@ -34,7 +34,7 @@
                 <div class="address-cards">
                     <h5>Select Previous Address</h5>
                     {% for address in previous_address %}
-                        <div class="card-address" onclick="toggleCheckbox(this, 'address-{{ address.id }}')">
+                        <div class="card-address" >
                             <input type="checkbox" name="previous_address" value="{{ address.id }}" id="address-{{ address.id }}" onchange="fillAddress.call(this)">
                             <label for="address-{{ address.id }}">
                                 <strong>{{ address.address }}</strong><br>
@@ -48,12 +48,16 @@
                     {% endfor %}
                 </div>
 
+
+                <div id="payment-loader" class="loader" style="display: none;">
+                    <div class="spinner"></div>
+                </div>
                 <!-- Saved Cards -->
                 <div class="form-section">
                     <h4>Saved Cards</h4>
-                    <div class="saved-cards " onclick="toggleCheckbox(this, 'card-{{ card.id }}')">
+                    <div class="saved-cards " >
                         {% for card in saved_cards %}
-                            <div class="card-saved" onclick="toggleCheckbox(this, 'card-{{ card.id }}')" >
+                            <div class="card-saved"  >
                                 <input type="radio" name="saved_card" value="{{ card.id }}" id="card-{{ card.id }}" />
                                 <label for="card-{{ card.id }}">
                                     <div class="card-details">
@@ -63,7 +67,7 @@
                             </div>
                         {% endfor %}
                     </div>
-                    <div class="card-saved" onclick="toggleCheckbox(this, 'card-new')">
+                    <div class="card-saved">
                         <input type="radio" name="saved_card" value="new" id="card-new" checked />
                         <label for="card-new">Use a new card</label>
                     </div>
@@ -151,6 +155,8 @@ document.querySelectorAll('.card-address').forEach((address) => {
       }
   });
 });
+
+
 </script>
 
 <style>

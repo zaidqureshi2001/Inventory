@@ -68,41 +68,12 @@ def user_logout(request):
     logout(request  )
     return redirect('login')
 
-@login_required(login_url='login')
-# def test(request):
-#     cart = request.session.get('cart', {})
-#     print("cart_length" , len(cart))
-#     order = Order.objects.filter(staff=request.user)
-#     order_chart = Order.objects.all()
-#     product = Product.objects.all()
-#     workers = User.objects.all()
-#     worker = workers.count()
-#     order_count = Order.objects.count()
-#     orders = Order.objects.filter(payment_status='success')
-#     product_count = Product.objects.count()
-#     items = Product.objects.filter(quantity__lt=50)
-#     Lowstock_count =items.count()
-#     context = {
-#     'cart_items':cart,
-#     'Lowstock_count':Lowstock_count,
-#     'order':order,
-#     'product':product ,
-#     'order_chart':order_chart,
-#     'workers':workers,
-#     'worker':worker,
-#     'order_count' : order_count,
-#     'orders': orders,
-#     'product_count':product_count
-#     }
-#     return render(request , 'test.html' , context)
 
 
 @login_required(login_url='login')
 def test(request):
     cart = request.session.get('cart', {})
     print("cart_length", len(cart))
-    
-    # Fetch relevant data
     orders = Order.objects.filter(staff=request.user)
     order_chart = Order.objects.all()
     order_items = OrderItem.objects.select_related('order').all()  # Fetch OrderItem objects
@@ -121,11 +92,10 @@ def test(request):
         created_at = order_item.order.created_at  # Use the order's created_at field
         if created_at:
             date_str = created_at.date()  # Use the date part for aggregation
+            # print(date_str)
             order_data[date_str] += 1  # Increment count for each OrderItem
-    
-    # Sort the dates and order counts
-    order_dates = [date.strftime("%Y-%m-%d") for date in sorted(order_data.keys())]
-    order_quantities = [order_data[date] for date in sorted(order_data.keys())]
+    order_dates = sorted(order_data.keys())
+    order_quantities = [order_data[date] for date in order_dates]
     print("Order Dates:", order_dates)
     print("Order Quantities:", order_quantities)
 
@@ -146,23 +116,6 @@ def test(request):
 
     return render(request, 'test.html', context)
 
-
-
-def get_order_data(request):
-    order_data = defaultdict(int)
-    print(order_data)
-    # Simulate order data
-    for i in range(0, 7):  # Last 7 days
-        date = datetime.now().date() - timedelta(days=i)
-        order_data[date] = i * 5  # Example: 5, 10, 15, etc.
-        print(date)
-
-    # Format the data for JSON response
-    response = {
-        'dates': [date.strftime("%Y-%m-%d") for date in order_data.keys()],
-        'quantities': list(order_data.values())
-    }
-    return JsonResponse(response)
 
 @login_required(login_url='login')
 def staff(request):
@@ -861,4 +814,34 @@ def cancel(request):
     }
     return render(request, 'dashboard/cancel.html', context)
 
+def get_order_data(request):
+    # Assuming you have the OrderItem model, which is related to an Order
+    order_items = OrderItem.objects.select_related('order').all()
+    order_data = defaultdict(int)
 
+    # Aggregate orders by date
+    for order_item in order_items:
+        order_date = order_item.order.created_at.date()  # Ensure this is a date object
+        order_data[order_date] += 1  # Increment by 1 for each order
+
+    # Sort the dates and prepare the response
+    order_dates = sorted(order_data.keys())
+    order_counts = [order_data[date] for date in order_dates]
+
+    # Return the data as JSON
+    return JsonResponse({
+        'dates': [date.strftime('%Y-%m-%d') for date in order_dates],  # Convert dates to string format
+        'counts': order_counts
+    })
+
+
+# views.py
+from django.shortcuts import render, get_object_or_404
+from .models import Product
+
+def product_detail(request, id):
+    # Fetch the product by its ID, or return 404 if it doesn't exist
+    product = get_object_or_404(Product, id=id)
+    
+    # Pass the product details to the template
+    return render(request, 'dashboard/product_details.html', {'product': product})
