@@ -339,9 +339,7 @@ def cart(request):
     context = {'cart_items': cart, 'total_price': total_price}
     return render(request, 'dashboard/cart.html', context)
 
-
-
-
+# View to update cart quantity (increase or decrease)
 def update_cart(request, product_id, action):
     cart = request.session.get('cart', {})   
     try:
@@ -367,7 +365,6 @@ def update_cart(request, product_id, action):
             total_price += float(item['price']) * item['quantity']
 
         request.session['cart'] = cart
-        print(f"Cart after update: {cart}")
         return JsonResponse({
             'success': True,
             'new_quantity': cart[str(product_id)]['quantity'],
@@ -375,6 +372,23 @@ def update_cart(request, product_id, action):
         })
     
     return JsonResponse({'success': False})
+
+# View to remove an item from the cart
+def delete_cart_item(request, product_id):
+    cart = request.session.get('cart', {})
+    
+    if str(product_id) in cart:
+        del cart[str(product_id)]
+        
+        total_price = 0
+        for item in cart.values():
+            total_price += float(item['price']) * item['quantity']
+
+        request.session['cart'] = cart
+        return JsonResponse({'success': True, 'new_total_price': total_price})
+    
+    return JsonResponse({'success': False})
+
 
 
 def checkout(request):
@@ -660,6 +674,7 @@ class ProcessCheckoutView(View):
                 customer=stripe_customer_id,
                 success_url=request.build_absolute_uri('/success'),  # Ensure success URL
                 cancel_url=request.build_absolute_uri('/cancel'),
+                
                 payment_intent_data={
                 'setup_future_usage': 'on_session'  # Save the card for future on-session use
                 },
@@ -842,6 +857,7 @@ from .models import Product
 def product_detail(request, id):
     # Fetch the product by its ID, or return 404 if it doesn't exist
     product = get_object_or_404(Product, id=id)
+    
     
     # Pass the product details to the template
     return render(request, 'dashboard/product_details.html', {'product': product})

@@ -17,31 +17,46 @@
         <div class="col-md-6">
             <h2>{{ product.name }}</h2>
             <p class="text-muted">{{ product.category }}</p>  
-            <p class="mt-6 text-xl"><strong>Description:</strong> {{ product.description }}</p>
+            <p class="mt-6 text-xm"><strong>Description:</strong> {{ product.description }}</p>
             <!-- Star Rating -->
             <div class="flex items-center mt-2 ">
                 <!-- Example Star Rating (You can customize this based on your actual rating system) -->
               
-                        <svg class="w-7 h-7 text-yellow-500" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
+                        <svg class="w-8 h-9 text-yellow-500" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
                             <path d="M10 15l-3.09 1.636L7.636 11l-3.91-3.05L7.364 6h5.272l2.238 1.95L12.364 11l1.728 5.636L10 15z"></path>
                         </svg>
            
-                        <svg class="w-7 h-7 text-gray-300" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
+                        <svg class="w-7 h-9 text-gray-300" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
                             <path d="M10 15l-3.09 1.636L7.636 11l-3.91-3.05L7.364 6h5.272l2.238 1.95L12.364 11l1.728 5.636L10 15z"></path>
                         </svg>
-                        <svg class="w-7 h-7 text-gray-300" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
+                        <svg class="w-7 h-9 text-gray-300" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
                             <path d="M10 15l-3.09 1.636L7.636 11l-3.91-3.05L7.364 6h5.272l2.238 1.95L12.364 11l1.728 5.636L10 15z"></path>
                         </svg>
-                        <svg class="w-7 h-7 text-gray-300" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
+                        <svg class="w-7 h-9 text-gray-300" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
+                            <path d="M10 15l-3.09 1.636L7.636 11l-3.91-3.05L7.364 6h5.272l2.238 1.95L12.364 11l1.728 5.636L10 15z"></path>
+                        </svg>
+                        <svg class="w-7 h-9 text-gray-300" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
                             <path d="M10 15l-3.09 1.636L7.636 11l-3.91-3.05L7.364 6h5.272l2.238 1.95L12.364 11l1.728 5.636L10 15z"></path>
                         </svg>
                     </div>
             <!-- Product Price (with offer) -->
 
             <div class="flex items-center space-x-2 mt-4">
-                <p class="text-lg font-semibold text-3xl">₹900</p>
-                <p class="text-sm text-gray-500 line-through text-2xl">₹{{ product.price }}</p>
+                {% if product.price %}
+                    <!-- Show the offer price if it exists -->
+                    <p class="text-lg font-semibold text-3xl">₹{{ product.price }}</p>
+                    {% if product.fake_price %}
+                        <!-- Show the original price with a line-through if offer price exists -->
+                        <p class="text-sm text-gray-500 line-through text-2xl">₹{{ product.price }}</p>
+                    {% endif %}
+                {% else %}
+                    <!-- If only the regular price exists, show it -->
+                    {% if product.price %}
+                        <p class="text-lg font-semibold text-3xl">₹{{ product.price }}</p>
+                    {% endif %}
+                {% endif %}
             </div>
+            
             <!-- Stock Status -->
             {% if product.quantity == 0 %}
                 <p class="text-danger">Out of stock</p>

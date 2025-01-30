@@ -127,6 +127,25 @@
     </div>
   {% else %}
   <div class="">
+<!-- Toast Notification Container -->
+<div class="toast-container position-fixed bottom-0 end-0 p-3" style="z-index: 1050;">
+  {% if messages %}
+      {% for message in messages %}
+          <div class="toast align-items-center text-bg-dark border-0 show" role="alert" aria-live="assertive" aria-atomic="true" style="border-bottom: 3px solid #28a745;">
+              <div class="d-flex">
+                  <div class="toast-body p-3 text-white">
+                      <i class="fas fa-check-circle text-success me-2"></i>  <!-- Success Icon in Green -->
+                      <strong class="me-auto"></strong>
+                      <p class="m-0">{{ message }}</p>
+                  </div>
+                  <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+              </div>
+          </div>
+      {% endfor %}
+  {% endif %}
+</div>
+
+    
     <div class="">
       <!-- Carousel with dynamic product images and fade effect -->
       <div id="carouselExampleFade" class="carousel slide carousel-fade" data-bs-ride="carousel">
@@ -188,29 +207,47 @@
       
                 <!-- Star Rating -->
                 <div class="flex items-center mt-2">
-                  <svg class="w-5 h-5 text-yellow-500" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
+                  <svg class="w-6 h-8 text-yellow-500" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
                     <path d="M10 15l-3.09 1.636L7.636 11l-3.91-3.05L7.364 6h5.272l2.238 1.95L12.364 11l1.728 5.636L10 15z"></path>
                 </svg>
-                <svg class="w-5 h-5 text-yellow-500" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
+                <svg class="w-6 h-8 text-yellow-500" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
                     <path d="M10 15l-3.09 1.636L7.636 11l-3.91-3.05L7.364 6h5.272l2.238 1.95L12.364 11l1.728 5.636L10 15z"></path>
                 </svg>
-                <svg class="w-5 h-5 text-yellow-500" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
+                <svg class="w-6 h-8 text-yellow-500" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
                     <path d="M10 15l-3.09 1.636L7.636 11l-3.91-3.05L7.364 6h5.272l2.238 1.95L12.364 11l1.728 5.636L10 15z"></path>
                 </svg>
-                <svg class="w-5 h-5 text-yellow-500" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
+                <svg class="w-6 h-8 text-yellow-500" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
                     <path d="M10 15l-3.09 1.636L7.636 11l-3.91-3.05L7.364 6h5.272l2.238 1.95L12.364 11l1.728 5.636L10 15z"></path>
                 </svg>
-                <svg class="w-5 h-5 text-gray-300" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
+                <svg class="w-6 h-8 text-gray-300" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
                     <path d="M10 15l-3.09 1.636L7.636 11l-3.91-3.05L7.364 6h5.272l2.238 1.95L12.364 11l1.728 5.636L10 15z"></path>
                 </svg>
                 </div>
       
                 <!-- Product Price -->
-                <div class="flex items-center space-x-2 mt-2">
-                  <p class="text-lg font-semibold ">₹{{ product.price }}</p>
-                  <p class="text-sm text-gray-500 line-through">₹900</p>
-              </div>
-      
+                {% comment %} <div class="flex items-center space-x-2 mt-2">
+                  {%if product.offer_price%}
+                  <p class="text-lg font-semibold ">{{product.offer_price}}</p>
+                   {% endif %}
+                  {% if product.price %}
+                  <p class="text-sm text-gray-500 line-through">₹{{ product.price }}</p>
+                  {% endif %}
+               
+              </div> {% endcomment %}
+              <div class="flex items-center space-x-2 mt-4">
+                {% if product.price %}
+                    <p class="text-lg font-semibold text-4xl">₹{{ product.price }}</p>
+                    {% if product.fake_price %}
+                        <!-- Show the original price with a line-through if offer price exists -->
+                        <p class="text-sm text-gray-500 line-through text-xl">₹{{ product.fake_price }}</p>
+                    {% endif %}
+                {% else %}
+                    <!-- If only the regular price exists, show it -->
+                    {% if product.price %}
+                        <p class="text-lg font-semibold text-2xl">₹{{ product.price }}</p>
+                    {% endif %}
+                {% endif %}
+            </div>
                 <!-- Stock Status -->
                 {% if product.quantity == 0 %}
                   <p class="text-sm text-red-600 mt-2">Out of stock</p>
@@ -234,4 +271,12 @@
     </div>
 </div>
   {% endif %}
+  <script>
+    var toastElements = document.querySelectorAll('.toast');
+    toastElements.forEach(function (toastElement) {
+      var toast = new bootstrap.Toast(toastElement);
+      toast.show();
+    });
+  </script>
+  
 {% endblock %}

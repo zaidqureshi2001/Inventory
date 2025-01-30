@@ -1,116 +1,189 @@
 {% extends 'partials/base.html' %}
 {% load static %}
 {% block content %}
-  <div class="row">
-    <div class="col-lg-12">
-      <div class="box-element">
+  <div class="flex justify-content-center">
+    <div class="col-lg-8">
+      <div class="box-element mt-10" style="position: relative; padding-bottom: 50px; ">
         <a class="btn btn-outline-dark" href="{% url 'test' %}">&#x2190; Continue Shopping</a>
-        <br />
-        <br />
-        <table class="table">
-          <tr>
-            <th>Product</th>
-            <th>Item name</th>
-            <th>Desc</th>
-            <th>Price</th>
-            <th>Quantity</th>
-            <th>Total</th>
-            <th>Action</th>
-          </tr>
+        <div id="cart-items" class="cart-items">
           {% for product_id, item in cart_items.items %}
-          <tr id="cart-item-{{ product_id }}">
-            <td>
-              <img src="{{ item.image }}" alt="{{ item.name }}" style="height: 220px; width: 192px;" />
-            </td>
-            <td>{{ item.name }}</td>
-            <td>{{ item.description }}</td>
-            <td>₹{{ item.price }}</td>
-            <td>
-              <button class="btn btn-outline-secondary update-cart" data-product="{{ product_id }}" data-action="decrease" data-stock="{{ item.available_stock }}">-</button>
-              <span id="quantity-{{ product_id }}">{{ item.quantity }}</span>
-              <button class="btn btn-outline-secondary update-cart" data-product="{{ product_id }}" data-action="increase" data-stock="{{ item.available_stock }}">+</button>
-            </td>
-            <td id="total-{{ product_id }}" data-price="{{ item.price }}">{{ item.price|floatformat:2 }}</td>
-            <td>
-              <button class="btn btn-danger delete-from-cart" data-product="{{ product_id }}">Delete</button>
-            </td>
-          </tr>
-        {% endfor %}
+            <div class="cart-item mt-3" id="cart-item-{{ product_id }}">
+              <div class="cart-item-image">
+                <img src="{{ item.image }}" alt="{{ item.name }}" style="height: 120px; width: 120px;" />
+              </div>
+              <div class="cart-item-details">
+                <div class="cart-item-name">{{ item.name }}</div>
         
-        </table>
-        <h3>Total: ₹<span id="total-price">{{ total_price|floatformat:2 }}</span></h3>
-        <a href="{% url 'checkout' %}" class="btn btn-success">Checkout</a>
+                <div class="flex items-center space-x-2 mt-2">
+                  <button class="btn btn-outline-secondary update-cart text-gray-600 hover:text-gray-800" data-product="{{ product_id }}" data-action="decrease" data-stock="{{ item.available_stock }}">
+                    <i class="fas fa-minus-circle"></i>
+                  </button>
+                  <span id="quantity-{{ product_id }}" class="text-lg font-semibold">{{ item.quantity }}</span>
+                  <button class="btn btn-outline-secondary update-cart text-gray-600 hover:text-gray-800" data-product="{{ product_id }}" data-action="increase" data-stock="{{ item.available_stock }}">
+                    <i class="fas fa-plus-circle"></i>
+                  </button>
+                </div>
+              </div>
+              <div class="text-lg font-semibold text-gray-800 mr-10" id="total-{{ product_id }}" data-price="{{ item.price }}">
+                ₹{{ item.price|floatformat:2 }}
+              </div>
+              <div>
+                <button class="text-red-600 hover:text-red-800 delete-from-cart mr-6" data-product="{{ product_id }}"><i class="fas fa-trash-alt"></i></button>
+              </div>
+            </div>
+          {% endfor %}
+        </div>
+
+        <div class="flex justify-between items-center pt-6 border-t">
+          <div class="text-xl font-semibold text-gray-800">
+            <h3>Total: ₹<span id="total-price">{{ total_price|floatformat:2 }}</span></h3>
+          </div>
+          <div class="">
+            <a href="{% url 'checkout' %}" class="bg-green-500 hover:bg-green-600 text-white font-semibold py-3 px-8 rounded-lg shadow-md transition duration-200">Checkout</a>
+          </div>
+        </div>
       </div>
     </div>
   </div>
-    <script>
-      document.addEventListener('DOMContentLoaded', function () {
-        document.querySelectorAll('.update-cart').forEach((button) => {
-          button.addEventListener('click', function () {
-            const productId = this.getAttribute('data-product');
-            const action = this.getAttribute('data-action');
-            const quantityElement = document.querySelector(`#quantity-${productId}`);
-            const currentQuantity = parseInt(quantityElement.textContent);
-            
-            // Get the available stock from the data-stock attribute
-            const availableStock = parseInt(this.getAttribute('data-stock'));
-      
-            // Prevent increase if quantity exceeds available stock
-            if (action === "increase" && currentQuantity >= availableStock) {
-              alert("Cannot increase quantity above available stock.");
-              return;
-            }
-      
-            fetch(`/update_cart/${productId}/${action}/`, {
-              method: 'GET'
-            })
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      document.querySelectorAll('.update-cart').forEach((button) => {
+        button.addEventListener('click', function () {
+          const productId = this.getAttribute('data-product')
+          const action = this.getAttribute('data-action')
+          const quantityElement = document.querySelector(`#quantity-${productId}`)
+          const currentQuantity = parseInt(quantityElement.textContent)
+          const availableStock = parseInt(this.getAttribute('data-stock'))
+    
+          // Prevent increase if quantity exceeds available stock
+          if (action === 'increase' && currentQuantity >= availableStock) {
+            alert('Cannot increase quantity above available stock.')
+            return
+          }
+    
+          fetch(`/update_cart/${productId}/${action}/`, {
+            method: 'GET'
+          })
             .then((response) => response.json())
             .then((data) => {
               if (data.success) {
-                quantityElement.textContent = data.new_quantity;
-      
-                const totalElement = document.querySelector(`#total-${productId}`);
-                const productPrice = parseFloat(totalElement.dataset.price);
-                totalElement.textContent = `${(productPrice * data.new_quantity).toFixed(2)}`;
-      
-                document.getElementById('total-price').textContent = `${data.new_total_price.toFixed(2)}`;
+                quantityElement.textContent = data.new_quantity
+    
+                const totalElement = document.querySelector(`#total-${productId}`)
+                const productPrice = parseFloat(totalElement.dataset.price)
+                totalElement.textContent = `${(productPrice * data.new_quantity).toFixed(2)}`
+    
+                document.getElementById('total-price').textContent = `${data.new_total_price.toFixed(2)}`
               } else {
-                alert(data.error || 'Error updating cart');
+                alert(data.error || 'Error updating cart')
               }
             })
             .catch((error) => {
-              console.error('Error updating cart:', error);
-            });
-          });
-        });
-      
-        // Add delete functionality
-        document.querySelectorAll('.delete-from-cart').forEach((button) => {
-          button.addEventListener('click', function () {
-            const productId = this.getAttribute('data-product');
-            fetch(`/delete_cart_item/${productId}/`, {
-              method: 'GET'
+              console.error('Error updating cart:', error)
             })
+        })
+      })
+    
+      // Add delete functionality
+      document.querySelectorAll('.delete-from-cart').forEach((button) => {
+        button.addEventListener('click', function () {
+          const productId = this.getAttribute('data-product')
+          fetch(`/delete_cart_item/${productId}/`, {
+            method: 'GET'
+          })
             .then((response) => response.json())
             .then((data) => {
               if (data.success) {
-                // Remove the product row from the table
-                location.reload();
-                const row = document.getElementById(`cart-item-${productId}`);
+                // Remove the product row from the cart
+                const row = document.getElementById(`cart-item-${productId}`)
                 if (row) {
-                  row.remove();
-                  
+                  row.remove()
                 }
+    
                 // Update the total price
-                document.getElementById('total-price').textContent = `${data.new_total_price.toFixed(2)}`;
+                document.getElementById('total-price').textContent = `${data.new_total_price.toFixed(2)}`
               }
             })
             .catch((error) => {
-              console.error('Error deleting cart item:', error);
-            });
-          });
-        });
-      });    
-    </script>
+              console.error('Error deleting cart item:', error)
+            })
+        })
+      })
+    })
+  </script>
 
+  <style>
+    /* Cart Styles */
+    .cart-items {
+      display: flex;
+      flex-direction: column;
+    }
+    
+    .cart-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 15px;
+      padding: 15px;
+      background-color: #f9f9f9;
+      border-radius: 8px;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    }
+    
+    .cart-item-image {
+      width: 120px;
+      height: 120px;
+    }
+    
+    .cart-item-details {
+      flex: 1;
+      padding-left: 20px;
+    }
+    
+    .cart-item-name {
+      font-weight: bold;
+      font-size: 16px;
+    }
+    
+    .cart-item-price {
+      margin-top: 5px;
+      color: #333;
+    }
+    
+    .cart-item-quantity {
+      margin-top: 10px;
+    }
+    
+    .cart-item-total {
+      font-size: 16px;
+      font-weight: bold;
+      color: #333;
+    }
+    
+    .cart-item-remove {
+      margin-left: 15px;
+    }
+    
+    .cart-footer {
+      display: flex;
+      justify-content: space-between;
+      padding-top: 20px;
+      border-top: 2px solid #ddd;
+      margin-top: 30px;
+    }
+    
+    .cart-total {
+      font-size: 18px;
+      font-weight: bold;
+    }
+    
+    .cart-checkout .btn {
+      font-size: 16px;
+      padding: 10px 30px;
+    }
+    
+    .btn-outline-danger i {
+      font-size: 18px;
+    }
+  </style>
 {% endblock %}
