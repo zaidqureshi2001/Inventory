@@ -3,8 +3,8 @@ from .models import Product, Order, Profile, ShippingAddress, OrderItem
 
 # Customization for the Product model in the admin interface
 class ProductAdmin(admin.ModelAdmin):
-    list_display = ('name', 'quantity', 'category',)
-    list_filter = ['category']
+    list_display = ('name', 'quantity', 'category', 'new_arrival')
+    list_filter = ['category' ,'new_arrival' ]
 
 # Customization for the Order model in the admin interface
 class OrderAdmin(admin.ModelAdmin):

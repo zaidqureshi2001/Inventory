@@ -118,7 +118,7 @@ USE_TZ = True
 
 
 
-
+# 
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.1/howto/static-files/
@@ -149,3 +149,12 @@ SESSION_EXPIRE_AT_BROWSER_CLOSE = False  # Keep session active after closing the
 
 TIME_ZONE = 'Asia/Kolkata'
 USE_TZ = True
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = 'zedqureshi09@gmail.com'  # Your email address
+EMAIL_HOST_PASSWORD = 'zrlw gagt swth ohrd'  # Your email password (or app password)
+# DEFAULT_FROM_EMAIL = 'no-reply@example.com'  # Default "from" email address
+
+

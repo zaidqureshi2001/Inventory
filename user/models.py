@@ -18,6 +18,7 @@ class Product(models.Model):
     description = models.TextField(blank=True, null=True)
     image = models.ImageField(upload_to='product_images/', blank=True, null=True)
     fake_price = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    new_arrival = models.BooleanField(default=False) 
     
     def __str__(self):
         return f'{self.name}'

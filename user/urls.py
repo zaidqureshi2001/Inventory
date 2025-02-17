@@ -6,10 +6,10 @@ from django.conf import settings
 from .import views
 
 urlpatterns = [
-    path('', views.register , name="register"),
+    path('' , views.test , name='test'),
+    path('register/', views.register , name="register"),
     path('login/' , views.login , name='login'),
     path('logout/' , views.user_logout , name='logout'),
-    path('test/' , views.test , name='test'),
     path('staff/' , views.staff , name='staff'),
     path('top/' , views.top , name='top'),
     path('product/' , views.product , name='product'),

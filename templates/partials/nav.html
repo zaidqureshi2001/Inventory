@@ -1,82 +1,143 @@
 <head>
   <!-- Bootstrap CSS -->
-  <link
-    rel="stylesheet"
-    href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
-    integrity="sha512-Evv84Mr4kqVGRNSgIGL/F/aIDqQb7xQ2vcrdIwxfjThSH8CSR7PBEakCr51Ck+w+/U6swU2Im1vVX0SVk9ABhg=="
-    crossorigin="anonymous"
-    referrerpolicy="no-referrer"
-  />
-  <link
-    href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css"
-    rel="stylesheet"
-  />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" integrity="sha512-Evv84Mr4kqVGRNSgIGL/F/aIDqQb7xQ2vcrdIwxfjThSH8CSR7PBEakCr51Ck+w+/U6swU2Im1vVX0SVk9ABhg==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet" />
   <!-- Custom CSS -->
   <style>
-    *{
+    * {
       margin: 0;
       padding: 0;
       box-sizing: ;
     }
-  .cart-count{
-    position: absolute;
-    top: 10px;
-    font-size: 14px;
-  }
-  .cart{
-    padding-right: 40px;
-
-  }
-  {% comment %} .navbar{
-    position: fixed;
-    z-index: 999;
-    width: 100%;
-  } {% endcomment %}
+    
+    .navbar-nav {
+      display: flex;
+      justify-content: center; /* Center the nav items */
+      width: 70%;
+    }
+    
+    .nav-item {
+      margin: 0 15px;
+    }
+    
+    .nav-link {
+      font-size: 18px;
+      font-family: 'Arial', sans-serif; /* Set font to Arial, you can change it to any font you prefer */
+      transition: color 0.3s ease, transform 0.3s ease; /* Smooth transition for hover effect */
+    }
+    
+    .nav-link:hover {
+      color: #ff6f61; /* Change color on hover */
+      transform: scale(1.1); /* Slightly scale up on hover */
+    }
+    
+    .cart-count {
+      position: absolute;
+      top: 10px;
+      font-size: 14px;
+    }
+    .cart {
+      padding-right: 40px;
+    }
+    /* Initial state of the login link */
+    a:hover {
+      text-decoration: none;
+    }
+    
+    .login-popup {
+      font-size: 20px;
+      color: #ff6f61;
+    }
+    /* Make the dropdown appear on hover */
+    .nav-item:hover .dropdown-menu {
+      display: block;
+      visibility: visible;
+      opacity: 1;
+    }
+    
+    /* Add a smooth transition */
+    .nav-item .dropdown-menu {
+      display: none;
+      visibility: hidden;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
   </style>
 </head>
 <body>
-  <nav class="navbar navbar-expand-lg">
+  <nav class="navbar navbar-expand-lg" style="position: fixed;top: 0; z-index: 999; width: 100%;">
     <div class="container-fluid">
-      <a class="navbar-brand" href="#">Inventory</a>
-      <button
-        class="navbar-toggler"
-        type="button"
-        data-bs-toggle="collapse"
-        data-bs-target="#navbarSupportedContent"
-        aria-controls="navbarSupportedContent"
-        aria-expanded="false"
-        aria-label="Toggle navigation"
-      >
-        <span class="navbar-toggler-icon"></span>
-      </button>
+      <a class="navbar-brand" href="{% url 'test' %}">Inventory</a>
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation"><span class="navbar-toggler-icon"></span></button>
       <div class="collapse navbar-collapse" id="navbarSupportedContent">
         <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-          <li class="nav-item">
-            <a class="nav-link active" aria-current="page" href="{% url 'test' %}">Dashboard</a>
-          </li>
-        </ul>
+            {% if not user.is_staff %}
+            <li class="nav-item dropdown">
+              <a class="nav-link dropdown-toggle active" href="{% url 'test' %}" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">Cotton</a>
+              <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <li>
+                  <a class="dropdown-item" href="">Cotton Kurti</a>
+                </li>
+              </ul>
+            </li>
+            <li class="nav-item dropdown">
+              <a class="nav-link dropdown-toggle active" href="{% url 'test' %}" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">Pakistani Suit</a>
+              <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <li>
+                  <a class="dropdown-item" href="">Pakistani Suit</a>
+                </li>
+              </ul>
+            </li>
+            <li class="nav-item dropdown">
+              <a class="nav-link dropdown-toggle active" href="{% url 'test' %}" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">Party Wear</a>
+              <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <li>
+                  <a class="dropdown-item" href="">Party Wear</a>
+                </li>
+              </ul>
+            </li>
+            <li class="nav-item dropdown">
+              <a class="nav-link dropdown-toggle active" href="{% url 'test' %}" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">Western Suit</a>
+              <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
+                <li>
+                  <a class="dropdown-item" href="">Western Suit</a>
+                </li>
+              </ul>
+            </li>
+            {% endif %}
+          </ul>
         <form class="d-flex" role="search">
           <div class="profile-dropdown">
-            <span class="text-white">Hello,</span>
-            <a href="{% url 'profile' %}" class="profile">{{ request.user }} Profile</a>
-            <div class="dropdown-menu">
-              {% if not request.user.is_staff %}
-                <a href="{% url 'myorder' %}">My Orders</a>
-              {% endif %}
-              <a href="{% url 'logout' %}">Logout</a>
-            </div>
+            <!-- If the user is authenticated, show their username -->
+            {% if user.is_authenticated %}
+              <span class="text-white">Hello,</span>
+              <a href="{% url 'profile' %}" style="text-transform: capitalize;" class="profile">{{ user.username }}</a>
+              <div class="dropdown-menu">
+                {% if not user.is_staff %}
+                  <a href="{% url 'myorder' %}">My Orders</a>
+                {% endif %}
+                <a href="{% url 'logout' %}">Logout</a>
+              </div>
+            {% else %}
+              <!-- If the user is not authenticated, prompt them to log in -->
+              <span class="text-white"></span>
+              <a href="{% url 'login' %}" class="profile login-popup">Login</a>
+            {% endif %}
           </div>
         </form>
+
         {% if not request.user.is_staff %}
-        <div class="cart">
-          <a href="{% url 'cart' %}" class="cart-icon"><i class="fa-solid fa-cart-shopping">
-            <span class="cart-count">{{cart_items|length }}</span></i></a>
-        </div>
+          <div class="cart">
+            <a href="{% url 'cart' %}" class="cart-icon"><i class="fa-solid fa-cart-shopping"><span class="cart-count">{{ cart_items|length }}</span></i></a>
+          </div>
         {% endif %}
       </div>
     </div>
   </nav>
-  {% block content %} {% endblock %}
+
+  {% block content %}
+
+  {% endblock %}
 
   <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.6/dist/umd/popper.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.min.js"></script>

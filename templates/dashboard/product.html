@@ -1,75 +1,123 @@
 {% extends 'partials/base.html' %}
 
 {% block title %}
-  Product
+  Product Dashboard
 {% endblock %}
 
 {% block content %}
-  <div class="container my-4">
+  <div class="container-fluid my-4">
     <div class="row">
-      <div class="col-md-4">
-        <div class="card shadow-sm">
+      <!-- Add Product Section -->
+      <div class="col-md-4 col-lg-3">
+        <div class="card shadow-sm mb-4">
           {% for message in messages %}
             {% if message %}
-              <div class="alert alert-{{ message.tags }}">{{ message }}</div>
+              <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+              </div>
             {% endif %}
           {% endfor %}
           <div class="card-header bg-info text-white">
-            <h4>Add Products</h4>
+            <h4>Add Product</h4>
           </div>
-          <div class="card-body">
+          <div class="card-body border p-3">
             <form action="" method="POST" enctype="multipart/form-data">
               {% csrf_token %}
-              {{ form.as_p }}
-              <button class="btn btn-success btn-block" type="submit">Add Product</button>
+              <div class="mb-3">
+                <label for="id_name" class="form-label">Product Name</label>
+                <input type="text" name="name" id="id_name" class="form-control" value="{{ form.name.value }}" required>
+              </div>
+              <div class="mb-3">
+                <label for="id_category" class="form-label">Category</label>
+                <input type="text" name="category" id="id_category" class="form-control" value="{{ form.category.value }}" required>
+              </div>
+              <div class="mb-3">
+                <label for="id_quantity" class="form-label">Quantity</label>
+                <input type="number" name="quantity" id="id_quantity" class="form-control" value="{{ form.quantity.value }}" required>
+              </div>
+              <div class="mb-3">
+                <label for="id_price" class="form-label">Price</label>
+                <input type="number" name="price" id="id_price" class="form-control" value="{{ form.price.value }}" required>
+              </div>
+              <div class="mb-3">
+                <label for="id_image" class="form-label">Product Image</label>
+                <input type="file" name="image" id="id_image" class="form-control">
+              </div>
+              <div class="mb-3">
+                <label for="id_description" class="form-label">Description</label>
+                <textarea name="description" id="id_description" class="form-control" rows="3">{{ form.description.value }}</textarea>
+              </div>
+              <button class="btn btn-success w-100" type="submit">Add Product</button>
             </form>
           </div>
         </div>
       </div>
 
-      <div class="col-md-8">
-        <div class="card shadow-sm">
-          <div class="card-header bg-info text-white">
+      <!-- Product List Section -->
+      <div class="col-md-8 col-lg-9">
+        <div class="card shadow-sm mb-4">
+          <div class="card-header bg-info text-white d-flex justify-content-between">
             <h4>Product List</h4>
+            {% comment %} <div>
+              <button class="btn btn-primary btn-sm">Export</button>
+              <button class="btn btn-secondary btn-sm">Print</button>
+            </div> {% endcomment %}
           </div>
           <div class="card-body">
-            <table class="table table-striped table-bordered">
-              <thead class="bg-info text-white">
-                <tr>
-                  <th scope="col">#</th>
-                  <th scope="col">Name</th>
-                  <th scope="col">Category</th>
-                  <th scope="col">Quantity</th>
-                  <th scope="col">Price</th>
-                  <th scope="col">Image</th>
-                  <th scope="col">Description</th>
-                  <th scope="col">Activity</th>
-                </tr>
-              </thead>
-              <tbody>
-                {% for item in items %}
+            <div class="table-responsive">
+              <table class="table table-hover table-striped table-bordered align-middle">
+                <thead class="table-info">
                   <tr>
-                    <th scope="row">{{ forloop.counter }}</th>
-                    <td>{{ item.name }}</td>
-                    <td>{{ item.category }}</td>
-                    <td>{{ item.quantity }}</td>
-                    <td>rupees {{ item.price }}</td>
-                    <td>
-                      {% if item.image %}
-                        <img src="{{ item.image.url }}" alt="{{ item.name }}" style="max-width: 100px; max-height: 100px;" />
-                      {% else %}
-                        <img src="/static/default-image.png" alt="No image available" style="max-width: 100px; max-height: 100px;" />
-                      {% endif %}
-                    </td>
-                    <td>{{ item.description }}</td>
-                    <td>
-                      <a class="btn btn-info btn-sm" href="{% url 'product_update' item.id %}">Edit</a>
-                      <a class="btn btn-danger btn-sm" href="{% url 'delete' item.id %}">Delete</a>
-                    </td>
+                    <th scope="col">#</th>
+                    <th scope="col">Name</th>
+                    <th scope="col">Category</th>
+                    <th scope="col">Quantity</th>
+                    <th scope="col">Price</th>
+                    <th scope="col">Image</th>
+                    <th scope="col">Description</th>
+                    <th scope="col" class="text-center">Actions</th>
                   </tr>
-                {% endfor %}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {% for item in items %}
+                    <tr>
+                      <th scope="row">{{ forloop.counter }}</th>
+                      <td>{{ item.name }}</td>
+                      <td>{{ item.category }}</td>
+                      <td>{{ item.quantity }}</td>
+                      <td>₹ {{ item.price }}</td>
+                      <td>
+                        {% if item.image %}
+                          <img src="{{ item.image.url }}" alt="{{ item.name }}" class="img-thumbnail" style="max-width: 100px; max-height: 100px;">
+                        {% else %}
+                          <img src="/static/default-image.png" alt="No image" class="img-thumbnail" style="max-width: 100px; max-height: 100px;">
+                        {% endif %}
+                      </td>
+                      <td>{{ item.description|slice:":100" }}{% if item.description|length > 100 %}...{% endif %}</td>
+                      <td class="text-center">
+                        <a class="btn btn-info btn-sm" href="{% url 'product_update' item.id %}"><i class="fas fa-edit"></i> Edit</a>
+                        <a class="btn btn-danger btn-sm" href="{% url 'delete' item.id %}"><i class="fas fa-trash"></i> Delete</a>
+                      </td>
+                    </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+            <!-- Pagination (if needed) -->
+            {% comment %} <nav aria-label="Page navigation">
+              <ul class="pagination justify-content-center">
+                <li class="page-item disabled">
+                  <span class="page-link">Previous</span>
+                </li>
+                <li class="page-item active" aria-current="page">
+                  <span class="page-link">1</span>
+                </li>
+                <li class="page-item">
+                  <a class="page-link" href="#">Next</a>
+                </li>
+              </ul>
+            </nav> {% endcomment %}
           </div>
         </div>
       </div>

@@ -1,7 +1,7 @@
 {% extends 'partials/base.html' %}
 {% load static %}
 {% block content %}
-  <div class="flex justify-content-center">
+  <div class="flex justify-content-center mt-20">
     <div class="col-lg-8">
       <div class="box-element mt-10" style="position: relative; padding-bottom: 50px; ">
         <a class="btn btn-outline-dark" href="{% url 'test' %}">&#x2190; Continue Shopping</a>
@@ -33,13 +33,12 @@
             </div>
           {% endfor %}
         </div>
-
         <div class="flex justify-between items-center pt-6 border-t">
           <div class="text-xl font-semibold text-gray-800">
             <h3>Total: ₹<span id="total-price">{{ total_price|floatformat:2 }}</span></h3>
           </div>
           <div class="">
-            <a href="{% url 'checkout' %}" class="bg-green-500 hover:bg-green-600 text-white font-semibold py-3 px-8 rounded-lg shadow-md transition duration-200">Checkout</a>
+            <a href="{% url 'checkout' %}" class="bg-green-500 hover:bg-green-600 hover:no-underline no-underline text-white font-semibold py-3 px-8 rounded-lg shadow-md transition duration-200">Checkout</a>
           </div>
         </div>
       </div>
@@ -87,29 +86,25 @@
       // Add delete functionality
       document.querySelectorAll('.delete-from-cart').forEach((button) => {
         button.addEventListener('click', function () {
-          const productId = this.getAttribute('data-product')
+          const productId = this.getAttribute('data-product');
           fetch(`/delete_cart_item/${productId}/`, {
-            method: 'GET'
+            method: 'GET',
           })
             .then((response) => response.json())
             .then((data) => {
               if (data.success) {
-                // Remove the product row from the cart
-                const row = document.getElementById(`cart-item-${productId}`)
-                if (row) {
-                  row.remove()
-                }
-    
-                // Update the total price
-                document.getElementById('total-price').textContent = `${data.new_total_price.toFixed(2)}`
+                // Reload the page after successful deletion
+                location.reload(); // This will reload the page to reflect the updated cart
+              } else {
+                alert('Error deleting cart item');
               }
             })
             .catch((error) => {
-              console.error('Error deleting cart item:', error)
-            })
-        })
-      })
-    })
+              console.error('Error deleting cart item:', error);
+            });
+        });
+      });
+    });
   </script>
 
   <style>

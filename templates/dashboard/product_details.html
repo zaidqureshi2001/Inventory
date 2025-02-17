@@ -2,14 +2,14 @@
 {% extends 'partials/base.html' %}
 {% block title %}{{ product.name }} - Product Details{% endblock %}
 {% block content %}
-<div class="container my-5">
-    <div class="row">
+<div class="container my-5 pt-10 ">
+    <div class="row mb-40  ">
         <!-- Product Image -->
         <div class="col-md-6">
-            <img src="{{ product.image.url }}" class="img-fluid" alt="{{ product.name }}">
+            <img src="{{ product.image.url }}" class="img-fluid" alt="{{ product.name }}" style="height: 400px;">
             <form action="{% url 'addto_cart' product.id %}" method="POST" class="mt-4">
                 {% csrf_token %}
-                <button class="btn btn-primary w-full" {% if product.quantity == 0 %}disabled{% endif %}><i class="fa-solid fa-cart-shopping"></i> Add to Cart
+                <button class="btn btn-primary w-50" {% if product.quantity == 0 %}disabled{% endif %}><i class="fa-solid fa-cart-shopping"></i> Add to Cart
                 </button>
             </form>
         </div>
@@ -47,7 +47,7 @@
                     <p class="text-lg font-semibold text-3xl">₹{{ product.price }}</p>
                     {% if product.fake_price %}
                         <!-- Show the original price with a line-through if offer price exists -->
-                        <p class="text-sm text-gray-500 line-through text-2xl">₹{{ product.price }}</p>
+                        <p class="text-sm text-gray-500 line-through text-2xl">₹{{ product.fake_price }}</p>
                     {% endif %}
                 {% else %}
                     <!-- If only the regular price exists, show it -->

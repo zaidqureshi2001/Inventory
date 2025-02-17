@@ -129,49 +129,55 @@
   <div class="">
 <!-- Toast Notification Container -->
 <div class="toast-container position-fixed bottom-0 end-0 p-3" style="z-index: 1050;">
-  {% if messages %}
-      {% for message in messages %}
-          <div class="toast align-items-center text-bg-dark border-0 show" role="alert" aria-live="assertive" aria-atomic="true" style="border-bottom: 3px solid #28a745;">
-              <div class="d-flex">
-                  <div class="toast-body p-3 text-white">
-                      <i class="fas fa-check-circle text-success me-2"></i>  <!-- Success Icon in Green -->
-                      <strong class="me-auto"></strong>
-                      <p class="m-0">{{ message }}</p>
-                  </div>
-                  <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
-              </div>
-          </div>
-      {% endfor %}
-  {% endif %}
+    {% if messages %}
+        {% for message in messages %}
+            <div class="toast align-items-center text-bg-dark border-0 show" role="alert" aria-live="assertive" aria-atomic="true" style="border-bottom: 3px solid #28a745;">
+                <div class="d-flex">
+                    <div class="toast-body p-3 text-white">
+                        <i class="fas fa-check-circle text-success me-2"></i>  <!-- Success Icon in Green -->
+                        <strong class="me-auto">Success</strong>
+                        <p class="m-0">{{ message }}</p>
+                    </div>
+                    <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+                </div>
+            </div>
+        {% endfor %}
+    {% endif %}
 </div>
 
     
-    <div class="">
+    <div class="mt-20">
       <!-- Carousel with dynamic product images and fade effect -->
-      <div id="carouselExampleFade" class="carousel slide carousel-fade" data-bs-ride="carousel">
-        <div class="carousel-inner">
-          {% for product in product %}
-            <div class="carousel-item {% if forloop.first %}active{% endif %}">
-              <!-- Check if product has an image, else use a default image -->
-              {% if product.image %}
-                <img src="{{ product.image.url }}" class="d-block w-100" alt="{{ product.name }}">
-              {% else %}
-                <img src="/media/product_images/default_image.jpg" class="d-block w-100" alt="No image available">
-              {% endif %}
+      <div class="carousel-container d-flex justify-content-center align-items-center" style="margin-top: 10px;">
+        <div id="carouselExampleFade" class="carousel slide carousel-fade" data-bs-ride="carousel" style="height: 800px; width: 90rem; overflow: hidden;">
+            <div class="carousel-inner" style="height: 100%;">
+                {% for product in product %}
+                    <div class="carousel-item {% if forloop.first %}active{% endif %}" style="height: 100%;">
+                        <!-- Check if product has an image, else use a default image -->
+                        {% if product.image %}
+                            <img src="{{ product.image.url }}" class="d-block w-100 h-100 object-cover" alt="{{ product.name }}">
+                        {% else %}
+                            <img src="/media/product_images/default_image.jpg" class="d-block w-100 h-100 object-cover" alt="No image available">
+                        {% endif %}
+                    </div>
+                {% endfor %}
             </div>
-          {% endfor %}
+        
+            <!-- Carousel controls -->
+            <button class="carousel-control-prev custom-carousel-control" type="button" data-bs-target="#carouselExampleFade" data-bs-slide="prev">
+              <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+              <span class="visually-hidden">Previous</span>
+          </button>
+          <button class="carousel-control-next custom-carousel-control" type="button" data-bs-target="#carouselExampleFade" data-bs-slide="next">
+              <span class="carousel-control-next-icon" aria-hidden="true"></span>
+              <span class="visually-hidden">Next</span>
+          </button>
+          
         </div>
-
-        <!-- Carousel controls -->
-        <button class="carousel-control-prev " type="button" data-bs-target="#carouselExampleFade" data-bs-slide="prev">
-          <span class="carousel-control-prev-icon" aria-hidden="true"></span>
-          <span class="visually-hidden">Previous</span>
-        </button>
-        <button class="carousel-control-next" type="button" data-bs-target="#carouselExampleFade" data-bs-slide="next">
-          <span class="carousel-control-next-icon" aria-hidden="true"></span>
-          <span class="visually-hidden">Next</span>
-        </button>
-      </div>
+    </div>
+    
+    
+    
 
       <!-- Product Cards Grid -->
       <div class="container mx-auto py-8">
@@ -223,17 +229,6 @@
                     <path d="M10 15l-3.09 1.636L7.636 11l-3.91-3.05L7.364 6h5.272l2.238 1.95L12.364 11l1.728 5.636L10 15z"></path>
                 </svg>
                 </div>
-      
-                <!-- Product Price -->
-                {% comment %} <div class="flex items-center space-x-2 mt-2">
-                  {%if product.offer_price%}
-                  <p class="text-lg font-semibold ">{{product.offer_price}}</p>
-                   {% endif %}
-                  {% if product.price %}
-                  <p class="text-sm text-gray-500 line-through">₹{{ product.price }}</p>
-                  {% endif %}
-               
-              </div> {% endcomment %}
               <div class="flex items-center space-x-2 mt-4">
                 {% if product.price %}
                     <p class="text-lg font-semibold text-4xl">₹{{ product.price }}</p>
@@ -254,7 +249,6 @@
                 {% elif product.quantity < 10 %}
                   <p class="text-sm text-yellow-600 mt-2">Only {{ product.quantity }} left in stock</p>
                 {% endif %}
-      
                 <!-- Add to Cart Form -->
                 <form action="{% url 'addto_cart' product.id %}" method="POST" class="mt-4">
                   {% csrf_token %}
@@ -268,6 +262,92 @@
         </div>
       </div>
       
+      <div class="container mx-auto py-8">
+        <h2 class="text-3xl font-semibold text-center mb-6">New Arrivals</h2>
+        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
+            {% for product in new_arrivals %}
+                <div class="bg-white shadow-lg rounded-lg overflow-hidden group transform hover:scale-105 transition-all duration-300 ease-in-out">
+                  
+                  <!-- Product Image Section -->
+                  <div class="relative">
+                    <a href="{% url 'product_detail' product.id %}" class="block no-underline">
+                      {% if product.image %}
+                        <img src="{{ product.image.url }}" class="w-full h-64 object-cover rounded-t-lg" alt="{{ product.name }}">
+                      {% else %}
+                        <img src="/media/product_images/default_image.jpg" class="w-full h-64 object-cover rounded-t-lg" alt="No image available">
+                      {% endif %}
+                    </a>
+                  </div>
+          
+                  <!-- Product Info Section -->
+                  <div class="p-4">
+                    <!-- Product Name -->
+                    <h5 class="text-xl font-semibold text-black truncate no-underline text-black">
+                      <a href="{% url 'product_detail' product.id %}" class="no-underline text-black">{{ product.name }}</a>
+                    </h5>
+          
+                    <!-- Product Category -->
+                    <h6 class="text-sm text-gray-600">{{ product.category }}</h6>
+          
+                    <!-- Product Description -->
+                    <p class="text-sm text-gray-700">
+                      {{ product.description|slice:":80" }}...<a href="{% url 'product_detail' product.id %}" class="no-underline">Read More</a>
+                    </p>
+          
+                    <!-- Star Rating -->
+                    <div class="flex items-center mt-2">
+                      <svg class="w-6 h-8 text-yellow-500" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
+                        <path d="M10 15l-3.09 1.636L7.636 11l-3.91-3.05L7.364 6h5.272l2.238 1.95L12.364 11l1.728 5.636L10 15z"></path>
+                      </svg>
+                      <svg class="w-6 h-8 text-yellow-500" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
+                        <path d="M10 15l-3.09 1.636L7.636 11l-3.91-3.05L7.364 6h5.272l2.238 1.95L12.364 11l1.728 5.636L10 15z"></path>
+                      </svg>
+                      <svg class="w-6 h-8 text-yellow-500" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
+                        <path d="M10 15l-3.09 1.636L7.636 11l-3.91-3.05L7.364 6h5.272l2.238 1.95L12.364 11l1.728 5.636L10 15z"></path>
+                      </svg>
+                      <svg class="w-6 h-8 text-yellow-500" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
+                        <path d="M10 15l-3.09 1.636L7.636 11l-3.91-3.05L7.364 6h5.272l2.238 1.95L12.364 11l1.728 5.636L10 15z"></path>
+                      </svg>
+                      <svg class="w-6 h-8 text-gray-300" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
+                        <path d="M10 15l-3.09 1.636L7.636 11l-3.91-3.05L7.364 6h5.272l2.238 1.95L12.364 11l1.728 5.636L10 15z"></path>
+                      </svg>
+                    </div>
+          
+                    <!-- Price Section -->
+                    <div class="flex items-center space-x-2 mt-4">
+                        {% if product.price %}
+                            <p class="text-lg font-semibold text-4xl">₹{{ product.price }}</p>
+                            {% if product.fake_price %}
+                                <!-- Show the original price with a line-through if offer price exists -->
+                                <p class="text-sm text-gray-500 line-through text-xl">₹{{ product.fake_price }}</p>
+                            {% endif %}
+                        {% else %}
+                            <!-- If only the regular price exists, show it -->
+                            {% if product.price %}
+                                <p class="text-lg font-semibold text-2xl">₹{{ product.price }}</p>
+                            {% endif %}
+                        {% endif %}
+                    </div>
+                    
+                    <!-- Stock Status -->
+                    {% if product.quantity == 0 %}
+                        <p class="text-sm text-red-600 mt-2">Out of stock</p>
+                    {% elif product.quantity < 10 %}
+                        <p class="text-sm text-yellow-600 mt-2">Only {{ product.quantity }} left in stock</p>
+                    {% endif %}
+                    
+                    <!-- Add to Cart Form -->
+                    <form action="{% url 'addto_cart' product.id %}" method="POST" class="mt-4">
+                        {% csrf_token %}
+                        <button class="w-full py-2 px-4 bg-indigo-600 text-white font-semibold rounded-lg disabled:opacity-50" {% if product.quantity == 0 %}disabled{% endif %}>
+                            <i class="fa-solid fa-cart-shopping"></i> Add to Cart
+                        </button>
+                    </form>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
     </div>
 </div>
   {% endif %}
@@ -278,5 +358,50 @@
       toast.show();
     });
   </script>
+  <style>
+    body, .carousel-container {
+      margin: 0;
+      padding: 0;
+      background-color: #f3f3f3;
+  }
+
+  .carousel-control-prev,
+  .carousel-control-next {
+      position: absolute;  /* Keep buttons in the same position */
+      top: 50%;  /* Center vertically in the carousel */
+      transform: translateY(-50%);  /* Adjust the buttons to perfectly center */
+      border: 2px solid #fff;  /* White border */
+      background-color: rgba(0, 0, 0, 0.5);  /* Semi-transparent black background */
+      color: #fff;  /* White icon color */
+      font-size: 1.5rem;  /* Increase font size slightly if needed */
+      height: 45px;  /* Default button height */
+      width: 45px;  /* Default button width */
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      border-radius: 50%;  /* Circular buttons */
+      z-index: 1;  /* Ensure buttons are on top of the carousel */
+  }
   
+  .carousel-control-prev {
+      left: 10px;  /* Position the left button on the left */
+  }
+  
+  .carousel-control-next {
+      right: 10px;  /* Position the right button on the right */
+  }
+  
+  .carousel-control-prev:hover,
+  .carousel-control-next:hover {
+      background-color: rgba(0, 0, 0, 0.8);  /* Darken background on hover */
+  }
+  
+  .carousel-control-prev-icon,
+  .carousel-control-next-icon {
+      width: 25px;  /* Adjust icon size */
+      height: 25px;  /* Adjust icon size */
+  }
+  
+  
+  </style>
 {% endblock %}

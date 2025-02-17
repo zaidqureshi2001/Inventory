@@ -74,6 +74,10 @@
           Don't have an account?
           <a href="{% url 'register' %}" class="font-semibold text-indigo-600 hover:text-indigo-500">Sign Up</a>
         </p>
+        <p class="mt-10 text-center text-sm text-gray-500">
+          Login as 
+          <a href="{% url 'test' %}" class="font-semibold text-indigo-600 hover:text-indigo-500">Guest</a>
+        </p>
         
         <!-- Message Display -->
         {% for message in messages %}

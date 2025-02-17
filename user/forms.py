@@ -24,7 +24,9 @@ class ProfileUpdateForm(forms.ModelForm):
 class ProductForm(forms.ModelForm):
     class Meta:
         model = Product
-        fields= ['name' , 'category' , 'quantity' ,'price' , 'fake_price',  'description' , 'image']
+        fields= ['name' , 'category' , 'quantity' ,'price' , 'fake_price',  'description' , 'image' , 'new_arrival']
+        
+    new_arrival = forms.BooleanField(required=False, initial=False, label='New Arrival')
         
     def clean(self):
         cleaned_data = super().clean()

@@ -59,8 +59,32 @@
                                 {% for card in saved_cards %}
                                     <div class="card-saved flex items-center border p-4 rounded-lg bg-white hover:bg-gray-100 transition duration-200 ease-in-out">
                                         <input type="radio" name="saved_card" value="{{ card.id }}" id="card-{{ card.id }}" class="mr-4" />
-                                        <div class="ml-4">
-                                            <div class="font-semibold text-gray-800">{{ card.card.brand|title }} ending in {{ card.card.last4 }}</div>
+                                        <div class=" flex items-center">
+                                            <!-- Check card brand and display corresponding icon -->
+                                            {% if card.card.brand == 'visa' %}
+                                                <i class="fa-brands fa-cc-visa fa-2x mr-4"></i>
+                                            {% elif card.card.brand == 'mastercard' %}
+                                                {% comment %} <i class="fa-brands fa-cc-mastercard fa-2x mr-4"></i> {% endcomment %}
+                                                <img src="https://pngimg.com/uploads/mastercard/mastercard_PNG23.png" alt="" class="h-10 w-15 mr-1" >
+                                            {% elif card.card.brand == 'amex' %}
+                                                <i class="fa-brands fa-cc-amex fa-2x mr-4"></i>
+                                            {% elif card.card.brand == 'paypal' %}
+                                                <i class="fa-brands fa-cc-paypal fa-2x mr-4"></i>
+                                            {% elif card.card.brand == 'stripe' %}
+                                                <i class="fa-brands fa-cc-stripe fa-2x mr-4"></i>
+                                            {% elif card.card.brand == 'discover' %}
+                                                <i class="fa-brands fa-cc-discover fa-2x mr-4"></i>
+                                            {% elif card.card.brand == 'jcb' %}
+                                                <i class="fa-brands fa-cc-jcb fa-2x mr-4"></i>
+                                            {% else %}
+                                                <!-- Default Icon for unknown brands -->
+                                                <i class="fa-brands fa-credit-card fa-2x mr-4"></i>
+                                            {% endif %}
+                                            
+                                            <!-- Card info (last 4 digits) -->
+                                            <div class="font-semibold text-gray-800">
+                                                {{ card.card.brand|title }} ending in {{ card.card.last4 }}
+                                            </div>
                                         </div>
                                     </div>
                                 {% endfor %}
@@ -108,7 +132,6 @@
                         </div>
                     {% endfor %}
                 </div>
-
                 <hr class="my-6" />
                 <h5 class="text-lg font-medium">Total: ₹<span>{{ total_price|floatformat:2 }}</span></h5>
             </div>
