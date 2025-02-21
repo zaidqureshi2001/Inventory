@@ -332,7 +332,9 @@
   <body>
     {% include 'partials/nav.html' %}
     {% if user.is_authenticated and user.is_staff and user.is_superuser %}
+    {% if not hide_top %}
       {% include 'partials/top.html' %}
+    {% endif %}
     {% endif %}
     {% block content %}
 

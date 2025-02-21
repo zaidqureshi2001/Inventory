@@ -153,12 +153,15 @@
             <div class="carousel-inner" style="height: 100%;">
                 {% for product in product %}
                     <div class="carousel-item {% if forloop.first %}active{% endif %}" style="height: 100%;">
-                        <!-- Check if product has an image, else use a default image -->
-                        {% if product.image %}
-                            <img src="{{ product.image.url }}" class="d-block w-100 h-100 object-cover" alt="{{ product.name }}">
-                        {% else %}
-                            <img src="/media/product_images/default_image.jpg" class="d-block w-100 h-100 object-cover" alt="No image available">
-                        {% endif %}
+                        <!-- Wrap the image inside a link that navigates to the product detail page -->
+                        <a href="{% url 'product_detail' product.id %}" class="d-block w-100 h-100">
+                            <!-- Check if product has an image, else use a default image -->
+                            {% if product.image %}
+                                <img src="{{ product.image.url }}" class="d-block w-100 h-100 object-cover" alt="{{ product.name }}">
+                            {% else %}
+                                <img src="/media/product_images/default_image.jpg" class="d-block w-100 h-100 object-cover" alt="No image available">
+                            {% endif %}
+                        </a>
                     </div>
                 {% endfor %}
             </div>
@@ -172,9 +175,9 @@
               <span class="carousel-control-next-icon" aria-hidden="true"></span>
               <span class="visually-hidden">Next</span>
           </button>
-          
         </div>
     </div>
+    
     
     
     
@@ -253,7 +256,7 @@
                 <form action="{% url 'addto_cart' product.id %}" method="POST" class="mt-4">
                   {% csrf_token %}
                   <button class="w-full py-2 px-4 bg-indigo-600 text-white font-semibold rounded-lg disabled:opacity-50" {% if product.quantity == 0 %}disabled{% endif %}>
-                    <i class="fa-solid fa-cart-shopping"></i> Add
+                    <i class="fa-solid fa-cart-shopping"></i> Add to cart
                   </button>
                 </form>
               </div>
@@ -261,58 +264,149 @@
           {% endfor %}
         </div>
       </div>
-      
+      {% comment %} New Arrivals {% endcomment %}
       <div class="container mx-auto py-8">
-        <h2 class="text-3xl font-semibold text-center mb-6">New Arrivals</h2>
+        <h2 class="text-3xl font-bold text-center mt-10">New Arrivals</h2>
+        <!-- Updated red div -->
+        <div style="background-color:rgb(232, 117, 127); height: 10px; width: 5%; margin: 0 auto; margin-bottom: 80px; border-radius: 5px;" class="mb-10"></div>
+        
         <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
             {% for product in new_arrivals %}
                 <div class="bg-white shadow-lg rounded-lg overflow-hidden group transform hover:scale-105 transition-all duration-300 ease-in-out">
-                  
-                  <!-- Product Image Section -->
-                  <div class="relative">
+                    <!-- Product Image Section -->
+                    <div class="relative">
+                        <a href="{% url 'product_detail' product.id %}" class="block no-underline">
+                            {% if product.image %}
+                                <img src="{{ product.image.url }}" class="w-full h-64 object-cover rounded-t-lg" alt="{{ product.name }}">
+                            {% else %}
+                                <img src="/media/product_images/default_image.jpg" class="w-full h-64 object-cover rounded-t-lg" alt="No image available">
+                            {% endif %}
+                        </a>
+                    </div>
+                    <!-- Product Info Section -->
+                    <div class="p-4">
+                        <!-- Product Name -->
+                        <h5 class="text-xl font-semibold text-black truncate no-underline text-black">
+                            <a href="{% url 'product_detail' product.id %}" class="no-underline text-black">{{ product.name }}</a>
+                        </h5>
+        
+                        <!-- Product Category -->
+                        <h6 class="text-sm text-gray-600">{{ product.category }}</h6>
+        
+                        <!-- Product Description -->
+                        <p class="text-sm text-gray-700">
+                            {{ product.description|slice:":80" }}...<a href="{% url 'product_detail' product.id %}" class="no-underline">Read More</a>
+                        </p>
+        
+                        <!-- Star Rating -->
+                        <div class="flex items-center mt-2">
+                            <svg class="w-6 h-8 text-yellow-500" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
+                                <path d="M10 15l-3.09 1.636L7.636 11l-3.91-3.05L7.364 6h5.272l2.238 1.95L12.364 11l1.728 5.636L10 15z"></path>
+                            </svg>
+                            <svg class="w-6 h-8 text-yellow-500" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
+                                <path d="M10 15l-3.09 1.636L7.636 11l-3.91-3.05L7.364 6h5.272l2.238 1.95L12.364 11l1.728 5.636L10 15z"></path>
+                            </svg>
+                            <svg class="w-6 h-8 text-yellow-500" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
+                                <path d="M10 15l-3.09 1.636L7.636 11l-3.91-3.05L7.364 6h5.272l2.238 1.95L12.364 11l1.728 5.636L10 15z"></path>
+                            </svg>
+                            <svg class="w-6 h-8 text-yellow-500" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
+                                <path d="M10 15l-3.09 1.636L7.636 11l-3.91-3.05L7.364 6h5.272l2.238 1.95L12.364 11l1.728 5.636L10 15z"></path>
+                            </svg>
+                            <svg class="w-6 h-8 text-gray-300" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
+                                <path d="M10 15l-3.09 1.636L7.636 11l-3.91-3.05L7.364 6h5.272l2.238 1.95L12.364 11l1.728 5.636L10 15z"></path>
+                            </svg>
+                        </div>
+        
+                        <!-- Price Section -->
+                        <div class="flex items-center space-x-2 mt-4">
+                            {% if product.price %}
+                                <p class="text-lg font-semibold text-4xl">₹{{ product.price }}</p>
+                                {% if product.fake_price %}
+                                    <!-- Show the original price with a line-through if offer price exists -->
+                                    <p class="text-sm text-gray-500 line-through text-xl">₹{{ product.fake_price }}</p>
+                                {% endif %}
+                            {% else %}
+                                <!-- If only the regular price exists, show it -->
+                                {% if product.price %}
+                                    <p class="text-lg font-semibold text-2xl">₹{{ product.price }}</p>
+                                {% endif %}
+                            {% endif %}
+                        </div>
+                        
+                        <!-- Stock Status -->
+                        {% if product.quantity == 0 %}
+                            <p class="text-sm text-red-600 mt-2">Out of stock</p>
+                        {% elif product.quantity < 10 %}
+                            <p class="text-sm text-yellow-600 mt-2">Only {{ product.quantity }} left in stock</p>
+                        {% endif %}
+                        
+                        <!-- Add to Cart Form -->
+                        <form action="{% url 'addto_cart' product.id %}" method="POST" class="mt-4">
+                            {% csrf_token %}
+                            <button class="w-full py-2 px-4 bg-indigo-600 text-white font-semibold rounded-lg disabled:opacity-50" {% if product.quantity == 0 %}disabled{% endif %}>
+                                <i class="fa-solid fa-cart-shopping"></i> Add to Cart
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+    
+    
+   {% comment %} New section sale {% endcomment %}
+   <div class="container mx-auto py-8">
+    <h2 class="text-3xl font-bold text-center mt-10">Top Collection</h2>
+    <!-- Updated red div -->
+    <div style="background-color:rgb(232, 117, 127); height: 10px; width: 5%; margin: 0 auto; margin-bottom: 80px; border-radius: 5px;" class="mb-10"></div>
+    
+    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
+        {% for product in new_arrivals %}
+            <div class="bg-white shadow-lg rounded-lg overflow-hidden group transform hover:scale-105 transition-all duration-300 ease-in-out">
+                <!-- Product Image Section -->
+                <div class="relative">
                     <a href="{% url 'product_detail' product.id %}" class="block no-underline">
-                      {% if product.image %}
-                        <img src="{{ product.image.url }}" class="w-full h-64 object-cover rounded-t-lg" alt="{{ product.name }}">
-                      {% else %}
-                        <img src="/media/product_images/default_image.jpg" class="w-full h-64 object-cover rounded-t-lg" alt="No image available">
-                      {% endif %}
+                        {% if product.image %}
+                            <img src="{{ product.image.url }}" class="w-full h-64 object-cover rounded-t-lg" alt="{{ product.name }}">
+                        {% else %}
+                            <img src="/media/product_images/default_image.jpg" class="w-full h-64 object-cover rounded-t-lg" alt="No image available">
+                        {% endif %}
                     </a>
-                  </div>
-          
-                  <!-- Product Info Section -->
-                  <div class="p-4">
+                </div>
+                <!-- Product Info Section -->
+                <div class="p-4">
                     <!-- Product Name -->
                     <h5 class="text-xl font-semibold text-black truncate no-underline text-black">
-                      <a href="{% url 'product_detail' product.id %}" class="no-underline text-black">{{ product.name }}</a>
+                        <a href="{% url 'product_detail' product.id %}" class="no-underline text-black">{{ product.name }}</a>
                     </h5>
-          
+    
                     <!-- Product Category -->
                     <h6 class="text-sm text-gray-600">{{ product.category }}</h6>
-          
+    
                     <!-- Product Description -->
                     <p class="text-sm text-gray-700">
-                      {{ product.description|slice:":80" }}...<a href="{% url 'product_detail' product.id %}" class="no-underline">Read More</a>
+                        {{ product.description|slice:":80" }}...<a href="{% url 'product_detail' product.id %}" class="no-underline">Read More</a>
                     </p>
-          
+    
                     <!-- Star Rating -->
                     <div class="flex items-center mt-2">
-                      <svg class="w-6 h-8 text-yellow-500" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
-                        <path d="M10 15l-3.09 1.636L7.636 11l-3.91-3.05L7.364 6h5.272l2.238 1.95L12.364 11l1.728 5.636L10 15z"></path>
-                      </svg>
-                      <svg class="w-6 h-8 text-yellow-500" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
-                        <path d="M10 15l-3.09 1.636L7.636 11l-3.91-3.05L7.364 6h5.272l2.238 1.95L12.364 11l1.728 5.636L10 15z"></path>
-                      </svg>
-                      <svg class="w-6 h-8 text-yellow-500" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
-                        <path d="M10 15l-3.09 1.636L7.636 11l-3.91-3.05L7.364 6h5.272l2.238 1.95L12.364 11l1.728 5.636L10 15z"></path>
-                      </svg>
-                      <svg class="w-6 h-8 text-yellow-500" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
-                        <path d="M10 15l-3.09 1.636L7.636 11l-3.91-3.05L7.364 6h5.272l2.238 1.95L12.364 11l1.728 5.636L10 15z"></path>
-                      </svg>
-                      <svg class="w-6 h-8 text-gray-300" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
-                        <path d="M10 15l-3.09 1.636L7.636 11l-3.91-3.05L7.364 6h5.272l2.238 1.95L12.364 11l1.728 5.636L10 15z"></path>
-                      </svg>
+                        <svg class="w-6 h-8 text-yellow-500" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
+                            <path d="M10 15l-3.09 1.636L7.636 11l-3.91-3.05L7.364 6h5.272l2.238 1.95L12.364 11l1.728 5.636L10 15z"></path>
+                        </svg>
+                        <svg class="w-6 h-8 text-yellow-500" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
+                            <path d="M10 15l-3.09 1.636L7.636 11l-3.91-3.05L7.364 6h5.272l2.238 1.95L12.364 11l1.728 5.636L10 15z"></path>
+                        </svg>
+                        <svg class="w-6 h-8 text-yellow-500" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
+                            <path d="M10 15l-3.09 1.636L7.636 11l-3.91-3.05L7.364 6h5.272l2.238 1.95L12.364 11l1.728 5.636L10 15z"></path>
+                        </svg>
+                        <svg class="w-6 h-8 text-yellow-500" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
+                            <path d="M10 15l-3.09 1.636L7.636 11l-3.91-3.05L7.364 6h5.272l2.238 1.95L12.364 11l1.728 5.636L10 15z"></path>
+                        </svg>
+                        <svg class="w-6 h-8 text-gray-300" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
+                            <path d="M10 15l-3.09 1.636L7.636 11l-3.91-3.05L7.364 6h5.272l2.238 1.95L12.364 11l1.728 5.636L10 15z"></path>
+                        </svg>
                     </div>
-          
+    
                     <!-- Price Section -->
                     <div class="flex items-center space-x-2 mt-4">
                         {% if product.price %}
@@ -345,9 +439,49 @@
                     </form>
                 </div>
             </div>
-            {% endfor %}
-        </div>
+        {% endfor %}
     </div>
+</div>
+
+
+{% comment %} Sale Section  {% endcomment %}
+
+ <!-- Trending Section (Updated to Use New Arrivals) -->
+ <div class="container mx-auto py-8">
+  <h2 class="text-3xl font-bold text-center mt-10">Top Collection</h2>
+  <!-- Updated red div -->
+  <div style="background-color:rgb(232, 117, 127); height: 10px; width: 5%; margin: 0 auto; margin-bottom: 80px; border-radius: 5px;" class="mb-10"></div>
+
+  <!-- Trending Section (Updated to Use New Arrivals) -->
+  <div class="Trending-container">
+    <div class="mt-16">
+      <div class="flex-col m-3 p-4 md:flex md:flex-row h-full font-basker">
+        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
+          {% for product in new_arrivals %}
+            <div class="relative transform transition-transform duration-700 w-full h-96 bg-gray-100 shadow-lg rounded-lg overflow-hidden group hover:scale-105">
+              <!-- Product Image Section -->
+              <div class="relative h-full">
+                <a href="{% url 'product_detail' product.id %}" class="block no-underline h-full">
+                  <img
+                    src="{% if product.image %}{{ product.image.url }}{% else %}/media/product_images/default_image.jpg{% endif %}"
+                    alt="{{ product.name }}"
+                    class="w-full h-full object-cover rounded-t-lg"
+                  />
+                </a>
+              </div>
+            </div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+
+</div>
+
+
     </div>
 </div>
   {% endif %}

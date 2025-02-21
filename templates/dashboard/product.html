@@ -12,10 +12,21 @@
         <div class="card shadow-sm mb-4">
           {% for message in messages %}
             {% if message %}
-              <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
-                {{ message }}
-                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-              </div>
+
+              {% if message.tags == 'success' %}
+                <!-- Custom Success Message (Product Added) -->
+                <div class="alert alert-product-added alert-dismissible fade show" role="alert">
+                  <i class="fas fa-check-circle"></i>
+                  <span class="alert-message">{{ message }}</span>
+                  <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+              {% else %}
+                <!-- Default Message Style -->
+                <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                  {{ message }}
+                  <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+              {% endif %}
             {% endif %}
           {% endfor %}
           <div class="card-header bg-info text-white">
@@ -40,6 +51,17 @@
                 <label for="id_price" class="form-label">Price</label>
                 <input type="number" name="price" id="id_price" class="form-control" value="{{ form.price.value }}" required>
               </div>
+              <div class="mb-3">
+                <label for="id_fake_price" class="form-label">Fake Price</label>
+                <input type="number" name="fake_price" id="id_fake_price" class="form-control" value="{{ form.fake_price.value }}" required>
+              </div>
+
+              <!-- New Arrival Checkbox -->
+              <div class="mb-3 form-check">
+                <input type="checkbox" name="new_arrival" id="id_new_arrival" class="form-check-input" {% if form.new_arrival.value %}checked{% endif %}>
+                <label for="id_new_arrival" class="form-check-label">New Arrival</label>
+              </div>
+
               <div class="mb-3">
                 <label for="id_image" class="form-label">Product Image</label>
                 <input type="file" name="image" id="id_image" class="form-control">
@@ -104,23 +126,37 @@
                 </tbody>
               </table>
             </div>
-            <!-- Pagination (if needed) -->
-            {% comment %} <nav aria-label="Page navigation">
-              <ul class="pagination justify-content-center">
-                <li class="page-item disabled">
-                  <span class="page-link">Previous</span>
-                </li>
-                <li class="page-item active" aria-current="page">
-                  <span class="page-link">1</span>
-                </li>
-                <li class="page-item">
-                  <a class="page-link" href="#">Next</a>
-                </li>
-              </ul>
-            </nav> {% endcomment %}
           </div>
         </div>
       </div>
     </div>
   </div>
+
+  <style>
+    /* Custom Product Added Alert */
+    .alert-product-added {
+      background-color: #28a745;
+      color: #fff;
+      
+      border: 1px solid #218838;
+      font-size: 16px;
+      font-weight: bold;
+      display: flex;
+      align-items: center;
+      padding: 15px;
+      margin-bottom: 15px;
+    }
+
+    .alert-product-added .btn-close {
+      color: #fff;
+    }
+
+    .alert-product-added .fas {
+      margin-right: 10px;
+    }
+
+    .alert-product-added .alert-message {
+      flex: 1;
+    }
+  </style>
 {% endblock %}

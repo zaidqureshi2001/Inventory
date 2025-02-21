@@ -1,3 +1,5 @@
+{% load static %}
+
 <!DOCTYPE html>
 <html lang="en" class="h-full bg-white">
   <head>
@@ -5,7 +7,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Login</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    {% load static %}
     <style>
       /* Container for the blurred background */
       .bg-custom2 {
@@ -25,6 +26,27 @@
       .content-container {
         position: relative;
         z-index: 10; /* Keeps content above the blurred background */
+      }
+      .error-message {
+        background-color: #f8d7da; /* Red background */
+        color: #721c24; /* Dark red text */
+        border: 1px solid #f5c6cb; /* Light red border */
+        padding: 10px;
+        margin-top: 10px;
+        border-radius: 5px;
+        font-size: 14px;
+        text-align: center;
+      }
+        .success-message {
+        background-color: #d4edda; /* Light green background for success */
+        color: #155724; /* Dark green text for success */
+        border: 1px solid #c3e6cb; /* Lighter green border */
+        padding: 15px;
+        margin-top: 15px;
+        border-radius: 8px;
+        font-size: 16px;
+        font-weight: bold;
+        text-align: center;
       }
     </style>
   </head>
@@ -68,7 +90,9 @@
             </button>
           </div>
         </form>
-
+        <p class="mt-2 text-center text-sm text-gray-500">
+          <a href="{% url 'password_reset' %}" class="font-semibold text-indigo-600 hover:text-indigo-500">Forgot your password?</a>
+        </p>
         <!-- Signup Link -->
         <p class="mt-10 text-center text-sm text-gray-500">
           Don't have an account?
@@ -80,12 +104,37 @@
         </p>
         
         <!-- Message Display -->
-        {% for message in messages %}
-          <p id="messages" class="mt-4 text-center text-white bg-gray-500 p-2 rounded">
-            {{ message }}
-          </p>
-        {% endfor %}
+<!-- Message Display -->
+{% for message in messages %}
+  {% if message.tags == 'success' %}
+    <p class="success-message">
+      {{ message }}
+    </p>
+  {% elif message.tags == 'error' %}
+    <p class="error-message">
+      {{ message }}
+    </p>
+  {% endif %}
+{% endfor %}
+
+
       </div>
     </div>
   </body>
+  <script>
+    // Fade out the error or success messages after 5 seconds
+    document.addEventListener('DOMContentLoaded', function() {
+      setTimeout(function() {
+        const messages = document.querySelectorAll('.success-message, .error-message');
+        messages.forEach(function(message) {
+          message.style.transition = 'opacity 1s';
+          message.style.opacity = '0'; // Fade out
+          setTimeout(function() {
+            message.style.display = 'none'; // Remove the message from view
+          }, 1000); // Match this with the fade duration
+        });
+      }, 5000); // Delay before fading out (5 seconds)
+    });
+  </script>
+  
 </html>

@@ -31,15 +31,156 @@ from itertools import groupby
 import json
 from django.shortcuts import render, redirect
 import stripe
+from django.core.mail import EmailMultiAlternatives
+from django.utils.html import strip_tags
+from django.utils import timezone
 
+
+
+from django.core.mail import send_mail
+from django.conf import settings
+from django.contrib import messages
+from django.shortcuts import render, redirect
+from .forms import CreateUserForm
 
 def register(request):
     if request.method == 'POST':
         form = CreateUserForm(request.POST)
         if form.is_valid():
-            form.save() 
-            user = form.cleaned_data.get('username')
-            messages.success(request, "Account is created for "+ user)
+            # Save the form and create a user
+            user = form.save()
+            username = form.cleaned_data.get('username')
+
+            # Prepare the email content
+            subject = 'Welcome to Our Platform!'
+            from_email = settings.EMAIL_HOST_USER  # The email you set in settings.py
+            recipient_list = [user.email]  # The email provided by the user during registration
+
+            # HTML email content
+            message = f"""
+            <!DOCTYPE html>
+            <html lang="en">
+              <head>
+                <meta charset="UTF-8" />
+                <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+                <title>Welcome Email</title>
+                <style>
+                  body {{
+                    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+                    margin: 0;
+                    padding: 0;
+                    background-color: #f4f7f6;
+                  }}
+                  .email-container {{
+                    width: 100%;
+                    max-width: 600px;
+                    margin: 0 auto;
+                    background-color: #ffffff;
+                    border-radius: 8px;
+                    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+                    overflow: hidden;
+                  }}
+                  .email-header {{
+                    background-color: #007bff;
+                    color: #ffffff;
+                    padding: 30px 20px;
+                    text-align: center;
+                    font-size: 28px;
+                    font-weight: bold;
+                  }}
+                  .email-body {{
+                    padding: 40px 30px;
+                    color: #333;
+                    line-height: 1.6;
+                  }}
+                  .email-body h2 {{
+                    color: #007bff;
+                    font-size: 24px;
+                    margin-bottom: 20px;
+                  }}
+                  .cta-btn {{
+                    display: inline-block;
+                    background-color: #28a745;
+                    color: #ffffff;
+                    font-size: 18px;
+                    padding: 15px 30px;
+                    text-decoration: none;
+                    border-radius: 5px;
+                    text-align: center;
+                    margin-top: 20px;
+                    transition: background-color 0.3s ease;
+                  }}
+                  .cta-btn:hover {{
+                    background-color: #218838;
+                  }}
+                  .footer {{
+                    background-color: #f9f9f9;
+                    color: #777;
+                    padding: 20px;
+                    text-align: center;
+                    font-size: 14px;
+                    border-top: 1px solid #ddd;
+                  }}
+                  .footer a {{
+                    color: #007bff;
+                    text-decoration: none;
+                  }}
+                  .footer a:hover {{
+                    text-decoration: underline;
+                  }}
+                  .social-icons {{
+                    margin-top: 15px;
+                  }}
+                  .social-icons a {{
+                    color: #007bff;
+                    font-size: 20px;
+                    margin: 0 15px;
+                    text-decoration: none;
+                  }}
+                </style>
+              </head>
+              <body>
+                <div class="email-container">
+                  <!-- Header Section -->
+                  <div class="email-header">
+                    Welcome to Our Platform, {username}
+                  </div>
+
+                  <!-- Body Section -->
+                  <div class="email-body">
+                    <h2>Hello {username},</h2>
+                    <p>We are thrilled to have you as a member of our community! Thank you for signing up. To get started, we've got some exciting things waiting for you:</p>
+                    
+                    <p>Enjoy exclusive discounts and browse through a wide range of products on our platform.</p>
+                    
+                    <p>Click below to start your journey:</p>
+                    
+                    <a href="http://yourwebsite.com" class="cta-btn" target="_blank">Start Shopping Now</a>
+                    
+                    <div class="social-icons">
+                      <p>Follow us on social media for the latest updates:</p>
+                      <a href="https://facebook.com" target="_blank">Facebook</a>
+                      <a href="https://twitter.com" target="_blank">Twitter</a>
+                      <a href="https://instagram.com" target="_blank">Instagram</a>
+                    </div>
+                  </div>
+
+                  <!-- Footer Section -->
+                  <div class="footer">
+                    <p>Need help? <a href="http://yourwebsite.com/help" target="_blank">Visit our help center</a>.</p>
+                    <p>Thank you for joining our community! We're excited to have you.</p>
+                    <p>&copy; 2025 Your Platform, All rights reserved.</p>
+                  </div>
+                </div>
+              </body>
+            </html>
+            """
+
+            # Send the email
+            send_mail(subject, message, from_email, recipient_list, html_message=message)
+
+            # Display success message and redirect to login page
+            messages.success(request, f"Account successfully created for {username}!")
             return redirect('login')  
         else:
             messages.error(request, "There was an error with your registration. Please try again.")
@@ -48,6 +189,10 @@ def register(request):
 
     context = {'form': form}
     return render(request, 'dashboard/register.html', context)
+
+
+
+
 
 
 def login(request):
@@ -59,7 +204,7 @@ def login(request):
             auth_login(request , user)
             return redirect('test')
         else:
-            messages.info(request , 'Username OR Password Is Incorrect')
+            messages.error(request , 'Username OR Password Is Incorrect')
             
 
     return render(request , 'dashboard/login.html')
@@ -69,107 +214,6 @@ def user_logout(request):
     return redirect('login')
 
 
-
-# @login_required(login_url='login')
-# def test(request):
-#     cart = request.session.get('cart', {})
-#     print("cart_length", len(cart))
-#     orders = Order.objects.filter(staff=request.user)
-#     order_chart = Order.objects.all()
-#     order_items = OrderItem.objects.select_related('order').all()  # Fetch OrderItem objects
-#     product = Product.objects.all()
-#     workers = User.objects.all()
-#     worker = workers.count()
-#     order_count = Order.objects.count()
-#     successful_orders = Order.objects.filter(payment_status='success')
-#     product_count = Product.objects.count()
-#     items = Product.objects.filter(quantity__lt=50)
-#     lowstock_count = items.count()
-#     order_data = defaultdict(int)
-
-#     # Group OrderItems by the date their associated order was created
-#     for order_item in order_items:
-#         created_at = order_item.order.created_at  # Use the order's created_at field
-#         if created_at:
-#             date_str = created_at.date()  # Use the date part for aggregation
-#             # print(date_str)
-#             order_data[date_str] += 1  # Increment count for each OrderItem
-#     order_dates = sorted(order_data.keys())
-#     order_quantities = [order_data[date] for date in order_dates]
-#     print("Order Dates:", order_dates)
-#     print("Order Quantities:", order_quantities)
-
-#     context = {
-#         'cart_items': cart,
-#         'Lowstock_count': lowstock_count,
-#         'order': orders,
-#         'product': product,
-#         'order_chart': order_chart,
-#         'workers': workers,
-#         'worker': worker,
-#         'order_count': order_count,
-#         'orders': successful_orders,
-#         'product_count': product_count,
-#         'order_dates': order_dates,
-#         'order_quantities': order_quantities,  # Pass the order counts to the template
-#     }
-
-#     return render(request, 'test.html', context)
-
-from django.shortcuts import render
-from .models import Product, Order, OrderItem
-from collections import defaultdict
-from django.contrib.auth.decorators import login_required
-
-# @login_required(login_url='login')
-# def test(request):
-#     cart = request.session.get('cart', {})
-#     print("cart_length", len(cart))
-#     orders = Order.objects.filter(staff=request.user)
-#     order_chart = Order.objects.all()
-#     order_items = OrderItem.objects.select_related('order').all()  # Fetch OrderItem objects
-#     product = Product.objects.all()[:12]
-#     workers = User.objects.all()
-#     worker = workers.count()
-#     order_count = Order.objects.count()
-#     successful_orders = Order.objects.filter(payment_status='success')
-#     product_count = Product.objects.count()
-#     items = Product.objects.filter(quantity__lt=50)
-#     lowstock_count = items.count()
-#     order_data = defaultdict(int)
-
-#     # Fetch new arrival products
-#     new_arrivals = Product.objects.filter(new_arrival=True)  # This filters products that are marked as 'new_arrival'
-
-#     # Group OrderItems by the date their associated order was created
-#     for order_item in order_items:
-#         created_at = order_item.order.created_at  # Use the order's created_at field
-#         if created_at:
-#             date_str = created_at.date()  # Use the date part for aggregation
-#             order_data[date_str] += 1  # Increment count for each OrderItem
-#     order_dates = sorted(order_data.keys())
-#     order_quantities = [order_data[date] for date in order_dates]
-
-#     context = {
-#         'cart_items': cart,
-#         'Lowstock_count': lowstock_count,
-#         'order': orders,
-#         'product': product,
-#         'order_chart': order_chart,
-#         'workers': workers,
-#         'worker': worker,
-#         'order_count': order_count,
-#         'orders': successful_orders,
-#         'product_count': product_count,
-#         'order_dates': order_dates,
-#         'order_quantities': order_quantities,  # Pass the order counts to the template
-#         'new_arrivals': new_arrivals,  # Pass the new_arrivals to the template
-#     }
-
-#     return render(request, 'test.html', context)
-from django.shortcuts import render
-from collections import defaultdict
-from .models import Order, OrderItem, Product, User
 
 def test(request):
     cart = request.session.get('cart', {})
@@ -314,6 +358,7 @@ def order(request):
 def profile(request):
     cart = request.session.get('cart', {})
     context={
+        'hide_top': True,
         'cart_items':cart,
     }
     return render(request , 'dashboard/profile.html' , context)
@@ -369,6 +414,7 @@ def product_update(request , pk):
 def staff_details(request , pk):
     workers =User.objects.get(id=pk)
     context ={
+        'hide_top': True,
         'workers':workers
     }
     return render(request  , 'dashboard/staff_details.html' , context)
@@ -636,6 +682,9 @@ from django.utils import timezone
 import stripe
 
 
+from django.core.mail import EmailMultiAlternatives
+from django.conf import settings
+
 class ProcessCheckoutView(View):
     def post(self, request, *args, **kwargs):
         # Extract data from the request
@@ -759,42 +808,301 @@ class ProcessCheckoutView(View):
                     order.total_price = total_price
                     order.save()
 
-                    # Create detailed email content
-                    product_list = "\n".join(product_details)
-                    email_subject = f"Order Confirmation - {order.id}"
-                    email_message = f"""
+                    # Send order confirmation email
+                    html_content = f"""
+                    <html>
+                    <head>
+                        <style>
+                        body {{
+                            font-family: Arial, sans-serif;
+                            line-height: 1.6;
+                            background-color: #f4f4f4;
+                            color: #333;
+                            margin: 0;
+                            padding: 0;
+                            word-wrap: break-word;
+                        }}
+                        .email-container {{
+                            width: 100%;
+                            max-width: 800px;
+                            margin: 0 auto;
+                            background-color: #ffffff;
+                            border-radius: 8px;
+                            padding: 20px;
+                            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+                        }}
+                        .email-header {{
+                            background-color: #007bff;
+                            color: #ffffff;
+                            padding: 30px 20px;
+                            text-align: center;
+                            font-size: 28px;
+                            font-weight: bold;
+                        }}
+                        .email-body {{
+                            padding: 40px 30px;
+                            color: #333;
+                            line-height: 1.6;
+                        }}
+                        .email-body h2 {{
+                            color: #007bff;
+                            font-size: 24px;
+                            margin-bottom: 20px;
+                        }}
+                        .cta-btn {{
+                            display: inline-block;
+                            background-color: #28a745;
+                            color: #ffffff;
+                            font-size: 18px;
+                            padding: 15px 30px;
+                            text-decoration: none;
+                            border-radius: 5px;
+                            text-align: center;
+                            margin-top: 20px;
+                            transition: background-color 0.3s ease;
+                        }}
+                        .cta-btn:hover {{
+                            background-color: #218838;
+                        }}
+                        .footer {{
+                            background-color: #f9f9f9;
+                            color: #777;
+                            padding: 20px;
+                            text-align: center;
+                            font-size: 14px;
+                            border-top: 1px solid #ddd;
+                        }}
+                        .footer a {{
+                            color: #007bff;
+                            text-decoration: none;
+                        }}
+                        .footer a:hover {{
+                            text-decoration: underline;
+                        }}
+                        .order-summary-table {{
+                            width: 100%;
+                            border-collapse: collapse;
+                            margin-top: 20px;
+                            table-layout: fixed;
+                        }}
+                        .order-summary-table th, .order-summary-table td {{
+                            padding: 8px;
+                            border: 1px solid #ddd;
+                            text-align: left;
+                            word-wrap: break-word;
+                        }}
+                        .order-summary-table th {{
+                            background-color: #f2f2f2;
+                        }}
+                        .order-summary-table td.right {{
+                            text-align: right;
+                        }}
+                        .shipping-address {{
+                            background-color: #f8f8f8;
+                            padding: 20px;
+                            border-radius: 8px;
+                            margin-top: 20px;
+                        }}
+                        .shipping-address h3 {{
+                            font-size: 22px;
+                            color: #333;
+                            margin-bottom: 10px;
+                        }}
+                        .product-image {{
+                            width: 50px;
+                            height: auto;
+                            margin-right: 10px;
+                            vertical-align: middle;
+                        }}
+                        .payment-summary-table {{
+                            width: 100%;
+                            border-collapse: collapse;
+                            margin-top: 20px;
+                            font-size: 14px;
+                        }}
+                        .payment-summary-table th, .payment-summary-table td {{
+                            padding: 6px;
+                            border: 1px solid #ddd;
+                            text-align: left;
+                        }}
+                        .payment-summary-table td.right {{
+                            text-align: right;
+                        }}
+                        </style>
+                    </head>
+                    <body>
+                        <div class="email-container">
+                        <!-- Header Section -->
+                        <div class="email-header">
+                            Order Confirmation - Order ID: {order.id}
+                        </div>
+
+                        <!-- Body Section -->
+                        <div class="email-body">
+                            <h2>Thank you for your order, {user.username}!</h2>
+                            <p>We have received your order and are processing it now. Below are the details of your order:</p>
+
+                            <!-- Shipping Details -->
+                            <div class="shipping-address">
+                            <h3>Delivery Address:</h3>
+                            <p><strong>{shipping_address.address}</strong></p>
+                            <p>{shipping_address.city}, {shipping_address.state} - {shipping_address.zipcode}</p>
+                            <p>Phone: {shipping_address.phone_no}</p>
+                            </div>
+
+                            <!-- Order Summary -->
+                            <h3 style="text-align: center; font-size: 22px; color: #333;">Order Summary</h3>
+                            <table class="order-summary-table">
+                            <thead>
+                                <tr>
+                                <th>Product</th>
+                                <th>Details</th>
+                                <th>Price</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                    """
+
+                    # Initialize subtotal
+                    subtotal = 0
+
+                    # Add product list dynamically
+                    for product_id, item in cart.items():
+                        try:
+                            product = Product.objects.get(id=product_id)
+                            total_product_price = product.price * item['quantity']
+                            image_url = request.build_absolute_uri(product.image.url)
+                            subtotal += total_product_price
+                            html_content += f"""
+                            <tr>
+                            <td>
+                                <img src="{image_url}" alt="{product.name}" class="product-image">
+                                {product.name}
+                            </td>
+                            <td>Quantity: {item['quantity']}</td>
+                            <td class="right">₹{total_product_price}</td>
+                            </tr>
+                            """
+                        except Product.DoesNotExist:
+                            continue
+
+                    # Assuming there's a shipping fee or taxes, for example
+                    shipping_fee = 50  # Placeholder for shipping fee
+                    total_price = subtotal + shipping_fee
+
+                    html_content += f"""
+                            </tbody>
+                            </table>
+
+                            <!-- Payment Summary Table -->
+                            <h3 style="text-align: center; font-size: 18px; color: #333; margin-top: 30px;">Payment Summary</h3>
+                            <table class="payment-summary-table">
+                            <tbody>
+                                <tr>
+                                <td style="font-weight: bold;">Subtotal</td>
+                                <td class="right">₹{subtotal}</td>
+                                </tr>
+                                <tr>
+                                <td style="font-weight: bold;">Shipping</td>
+                                <td class="right">₹{shipping_fee}</td>
+                                </tr>
+                                <tr style="border-top: 1px solid #ddd;">
+                                <td style="font-weight: bold;">Total</td>
+                                <td class="right">₹{total_price}</td>
+                                </tr>
+                            </tbody>
+                            </table>
+
+                            <!-- Customer Support Section -->
+                            <div style="background-color: #f8f8f8; padding: 20px; margin-top: 20px; text-align: center;">
+                            <p>If you have any queries, please contact us at:</p>
+                            <p>Email: <a href="mailto:xyz@example.com" style="color: #333; text-decoration: none;">xyz@example.com</a><br>
+                                Customer Care No: +123-456-7890</p>
+                            </div>
+
+                            <!-- Closing Remarks -->
+                            <div style="text-align: center; margin-top: 20px; font-size: 16px; color: #555;">
+                            <p>We look forward to your next order! Stay connected with us.</p>
+                            <p>Thank you for shopping with us!</p>
+                            <a href="http://yourwebsite.com" target="_blank" class="cta-btn">Visit Our Website</a>
+                            </div>
+                        </div>
+
+                        <!-- Footer Section -->
+                        <div class="footer">
+                            <p>&copy; 2025 Your Platform, All rights reserved.</p>
+                            <p><a href="http://yourwebsite.com/help" target="_blank">Need Help? Visit our help center</a></p>
+                        </div>
+                        </div>
+                    </body>
+                    </html>
+                    """
+
+                    # Plain text version of the email (fallback)
+                    text_content = f"""
                     Dear {user.first_name} {user.last_name},
 
-                    Thank you for your order! Your order {order.id} has been successfully placed. 
-                    
+                    Thank you for your order! Your order {order.id} has been successfully placed.
+
                     Shipping Address:
                     {shipping_address.address}
-                    {shipping_address.city}, {shipping_address.state}, {shipping_address.zipcode}
+                    {shipping_address.city}, {shipping_address.state} - {shipping_address.zipcode}
                     Phone: {shipping_address.phone_no}
-                    
-                    Order Details:
-                    {product_list}
 
-                    Total Price: ₹{total_price}
-                    
-                    We will notify you once your order is shipped.
+                    Order Details:
+                    """
+
+                    for product_id, item in cart.items():
+                        try:
+                            product = Product.objects.get(id=product_id)
+                            total_product_price = product.price * item['quantity']
+                            text_content += f"{product.name} - Quantity: {item['quantity']} @ ₹{product.price} Total: ₹{total_product_price}\n"
+                        except Product.DoesNotExist:
+                            continue
+
+                    text_content += f"""
+                    Subtotal: ₹{subtotal}
+                    Shipping: ₹{shipping_fee}
+                    Total: ₹{total_price}
+
+                    If you have any queries, please contact us at:
+                    Email: xyz@example.com
+                    Customer Care No: +123-456-7890
+
+                    We look forward to your next order! Stay connected with us.
 
                     Thank you for shopping with us!
                     """
-                    
-                    # Send confirmation email to the user
+
+                    # Send the email with both plain text and HTML
+                    email_subject = f"Order Confirmation - {order.id}"
                     from_email = settings.DEFAULT_FROM_EMAIL
-                    recipient_list = [email]
+                    recipient_list = [user.email]
+
+                    msg = EmailMultiAlternatives(
+                        email_subject, 
+                        text_content, 
+                        from_email, 
+                        recipient_list
+                    )
+                    msg.attach_alternative(html_content, "text/html")
+
+                    # Send the email
                     try:
-                        send_mail(email_subject, email_message, from_email, recipient_list)
-                        print(f"Order confirmation email sent to {email}")
+                        msg.send()
+                        print(f"Order confirmation email sent to {user.email}")
                     except Exception as e:
                         print(f"Error sending email: {str(e)}")
+
+
+
+
 
                     # Clear the cart in the session
                     if 'cart' in request.session:
                         del request.session['cart']
                         request.session.modified = True
+
                     # Redirect to success page
                     return redirect(reverse('success'))
 
@@ -857,6 +1165,19 @@ from django.contrib.auth.models import User
 
 stripe.api_key = settings.STRIPE_SECRET_KEY
 
+from django.core.mail import EmailMultiAlternatives
+from django.utils.html import strip_tags
+from django.conf import settings
+from django.http import JsonResponse
+from .models import User, ShippingAddress, Product, Order, OrderItem
+import stripe
+from datetime import timezone
+
+
+from django.utils import timezone
+from .models import User, ShippingAddress, Product, Order, OrderItem
+
+
 @csrf_exempt
 def payment_webhook(request):
     if request.method == 'POST':
@@ -916,7 +1237,7 @@ def payment_webhook(request):
                 # Create the order after successful payment
                 order = Order.objects.create(
                     staff=user,
-                    date=timezone.now(),
+                    date=timezone.now(),  # Corrected usage of timezone.now()
                     payment_status='success',
                     shipping_address=shipping_address
                 )
@@ -952,38 +1273,294 @@ def payment_webhook(request):
                 order.total_price = total_price
                 order.save()
 
-                # Create detailed email content
-                product_list = "\n".join([f"{product.name} - Quantity: {item['quantity']} @ ₹{product.price}" for product_id, item in cart.items()])
-                email_subject = f"Order Confirmation - {order.id}"
-                email_message = f"""
+                # Send confirmation email and other actions here...
+                html_content = f"""
+                <html>
+                <head>
+                    <style>
+                    body {{
+                        font-family: Arial, sans-serif;
+                        line-height: 1.6;
+                        background-color: #f4f4f4;
+                        color: #333;
+                        margin: 0;
+                        padding: 0;
+                        word-wrap: break-word;
+                    }}
+                    .email-container {{
+                        width: 100%;
+                        max-width: 800px;
+                        margin: 0 auto;
+                        background-color: #ffffff;
+                        border-radius: 8px;
+                        padding: 20px;
+                        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+                    }}
+                    .email-header {{
+                        background-color: #007bff;
+                        color: #ffffff;
+                        padding: 30px 20px;
+                        text-align: center;
+                        font-size: 28px;
+                        font-weight: bold;
+                    }}
+                    .email-body {{
+                        padding: 40px 30px;
+                        color: #333;
+                        line-height: 1.6;
+                    }}
+                    .email-body h2 {{
+                        color: #007bff;
+                        font-size: 24px;
+                        margin-bottom: 20px;
+                    }}
+                    .cta-btn {{
+                        display: inline-block;
+                        background-color: #28a745;
+                        color: #ffffff;
+                        font-size: 18px;
+                        padding: 15px 30px;
+                        text-decoration: none;
+                        border-radius: 5px;
+                        text-align: center;
+                        margin-top: 20px;
+                        transition: background-color 0.3s ease;
+                    }}
+                    .cta-btn:hover {{
+                        background-color: #218838;
+                    }}
+                    .footer {{
+                        background-color: #f9f9f9;
+                        color: #777;
+                        padding: 20px;
+                        text-align: center;
+                        font-size: 14px;
+                        border-top: 1px solid #ddd;
+                    }}
+                    .footer a {{
+                        color: #007bff;
+                        text-decoration: none;
+                    }}
+                    .footer a:hover {{
+                        text-decoration: underline;
+                    }}
+                    .order-summary-table {{
+                        width: 100%;
+                        border-collapse: collapse;
+                        margin-top: 20px;
+                        table-layout: fixed;
+                    }}
+                    .order-summary-table th, .order-summary-table td {{
+                        padding: 8px;
+                        border: 1px solid #ddd;
+                        text-align: left;
+                        word-wrap: break-word;
+                    }}
+                    .order-summary-table th {{
+                        background-color: #f2f2f2;
+                    }}
+                    .order-summary-table td.right {{
+                        text-align: right;
+                    }}
+                    .shipping-address {{
+                        background-color: #f8f8f8;
+                        padding: 20px;
+                        border-radius: 8px;
+                        margin-top: 20px;
+                    }}
+                    .shipping-address h3 {{
+                        font-size: 22px;
+                        color: #333;
+                        margin-bottom: 10px;
+                    }}
+                    .product-image {{
+                        width: 50px;
+                        height: auto;
+                        margin-right: 10px;
+                        vertical-align: middle;
+                    }}
+                    .payment-summary-table {{
+                        width: 100%;
+                        border-collapse: collapse;
+                        margin-top: 20px;
+                        font-size: 14px;
+                    }}
+                    .payment-summary-table th, .payment-summary-table td {{
+                        padding: 6px;
+                        border: 1px solid #ddd;
+                        text-align: left;
+                    }}
+                    .payment-summary-table td.right {{
+                        text-align: right;
+                    }}
+                    </style>
+                </head>
+                <body>
+                    <div class="email-container">
+                    <!-- Header Section -->
+                    <div class="email-header">
+                        Order Confirmation - Order ID: {order.id}
+                    </div>
+
+                    <!-- Body Section -->
+                    <div class="email-body">
+                        <h2>Thank you for your order, {user.username}!</h2>
+                        <p>We have received your order and are processing it now. Below are the details of your order:</p>
+
+                        <!-- Shipping Details -->
+                        <div class="shipping-address">
+                        <h3>Delivery Address:</h3>
+                        <p><strong>{shipping_address.address}</strong></p>
+                        <p>{shipping_address.city}, {shipping_address.state} - {shipping_address.zipcode}</p>
+                        <p>Phone: {shipping_address.phone_no}</p>
+                        </div>
+
+                        <!-- Order Summary -->
+                        <h3 style="text-align: center; font-size: 22px; color: #333;">Order Summary</h3>
+                        <table class="order-summary-table">
+                        <thead>
+                            <tr>
+                            <th>Product</th>
+                            <th>Details</th>
+                            <th>Price</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                """
+
+                # Initialize subtotal
+                subtotal = 0
+
+                # Add product list dynamically
+                for product_id, item in cart.items():
+                    try:
+                        product = Product.objects.get(id=product_id)
+                        total_product_price = product.price * item['quantity']
+                        image_url = request.build_absolute_uri(product.image.url)
+                        subtotal += total_product_price
+                        html_content += f"""
+                        <tr>
+                        <td>
+                            <img src="{image_url}" alt="{product.name}" class="product-image">
+                            {product.name}
+                        </td>
+                        <td>Quantity: {item['quantity']}</td>
+                        <td class="right">₹{total_product_price}</td>
+                        </tr>
+                        """
+                    except Product.DoesNotExist:
+                        continue
+
+                # Assuming there's a shipping fee or taxes, for example
+                shipping_fee = 50  # Placeholder for shipping fee
+                total_price = subtotal + shipping_fee
+
+                html_content += f"""
+                        </tbody>
+                        </table>
+
+                        <!-- Payment Summary Table -->
+                        <h3 style="text-align: center; font-size: 18px; color: #333; margin-top: 30px;">Payment Summary</h3>
+                        <table class="payment-summary-table">
+                        <tbody>
+                            <tr>
+                            <td style="font-weight: bold;">Subtotal</td>
+                            <td class="right">₹{subtotal}</td>
+                            </tr>
+                            <tr>
+                            <td style="font-weight: bold;">Shipping</td>
+                            <td class="right">₹{shipping_fee}</td>
+                            </tr>
+                            <tr style="border-top: 1px solid #ddd;">
+                            <td style="font-weight: bold;">Total</td>
+                            <td class="right">₹{total_price}</td>
+                            </tr>
+                        </tbody>
+                        </table>
+
+                        <!-- Customer Support Section -->
+                        <div style="background-color: #f8f8f8; padding: 20px; margin-top: 20px; text-align: center;">
+                        <p>If you have any queries, please contact us at:</p>
+                        <p>Email: <a href="mailto:xyz@example.com" style="color: #333; text-decoration: none;">xyz@example.com</a><br>
+                            Customer Care No: +123-456-7890</p>
+                        </div>
+
+                        <!-- Closing Remarks -->
+                        <div style="text-align: center; margin-top: 20px; font-size: 16px; color: #555;">
+                        <p>We look forward to your next order! Stay connected with us.</p>
+                        <p>Thank you for shopping with us!</p>
+                        <a href="http://yourwebsite.com" target="_blank" class="cta-btn">Visit Our Website</a>
+                        </div>
+                    </div>
+
+                    <!-- Footer Section -->
+                    <div class="footer">
+                        <p>&copy; 2025 Your Platform, All rights reserved.</p>
+                        <p><a href="http://yourwebsite.com/help" target="_blank">Need Help? Visit our help center</a></p>
+                    </div>
+                    </div>
+                </body>
+                </html>
+                """
+
+                # Plain text version of the email (fallback)
+                text_content = f"""
                 Dear {user.first_name} {user.last_name},
 
-                Thank you for your order! Your order {order.id} has been successfully placed. 
-                
+                Thank you for your order! Your order {order.id} has been successfully placed.
+
                 Shipping Address:
                 {shipping_address.address}
-                {shipping_address.city}, {shipping_address.state}, {shipping_address.zipcode}
+                {shipping_address.city}, {shipping_address.state} - {shipping_address.zipcode}
                 Phone: {shipping_address.phone_no}
-                
-                Order Details:
-                {product_list}
 
-                Total Price: ₹{total_price}
-                
-                We will notify you once your order is shipped.
+                Order Details:
+                """
+
+                for product_id, item in cart.items():
+                    try:
+                        product = Product.objects.get(id=product_id)
+                        total_product_price = product.price * item['quantity']
+                        text_content += f"{product.name} - Quantity: {item['quantity']} @ ₹{product.price} Total: ₹{total_product_price}\n"
+                    except Product.DoesNotExist:
+                        continue
+
+                text_content += f"""
+                Subtotal: ₹{subtotal}
+                Shipping: ₹{shipping_fee}
+                Total: ₹{total_price}
+
+                If you have any queries, please contact us at:
+                Email: xyz@example.com
+                Customer Care No: +123-456-7890
+
+                We look forward to your next order! Stay connected with us.
 
                 Thank you for shopping with us!
                 """
 
-                # Send confirmation email to the user
+                # Send the email with both plain text and HTML
+                email_subject = f"Order Confirmation - {order.id}"
                 from_email = settings.DEFAULT_FROM_EMAIL
                 recipient_list = [user.email]
+
+                msg = EmailMultiAlternatives(
+                    email_subject, 
+                    text_content, 
+                    from_email, 
+                    recipient_list
+                )
+                msg.attach_alternative(html_content, "text/html")
+
+                # Send the email
                 try:
-                    send_mail(email_subject, email_message, from_email, recipient_list)
+                    msg.send()
                     print(f"Order confirmation email sent to {user.email}")
                 except Exception as e:
                     print(f"Error sending email: {str(e)}")
 
+
+                    
                 # Optionally clear the cart session here if needed
                 if 'cart' in request.session:
                     print(f"Cart before clearing: {request.session['cart']}")
@@ -1002,6 +1579,8 @@ def payment_webhook(request):
 
     # If the request is not a POST request, return a method not allowed response
     return JsonResponse({'status': 'failed', 'message': 'Method not allowed'}, status=405)
+
+
 
 
 def success(request):

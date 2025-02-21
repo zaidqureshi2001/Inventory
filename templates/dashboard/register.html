@@ -1,3 +1,4 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="en" class="h-full bg-white">
   <head>
@@ -8,7 +9,7 @@
     <style>
       /* Container for the blurred background */
       .bg-custom {
-        background-image: url('static/images/bg1.jpg');
+        background-image: url("{% static 'images/bg1.jpg' %}");
         background-size: cover;
         background-position: center;
         background-repeat: no-repeat;
@@ -24,6 +25,16 @@
       .content-container {
         position: relative;
         z-index: 10; /* Keeps content above the blurred background */
+      }
+      .error-message {
+        background-color: #f8d7da; /* Red background */
+        color: #721c24; /* Dark red text */
+        border: 1px solid #f5c6cb; /* Light red border */
+        padding: 10px;
+        margin-top: 10px;
+        border-radius: 5px;
+        font-size: 14px;
+        text-align: center;
       }
     </style>
   </head>
@@ -87,12 +98,12 @@
         <!-- Login Link -->
         <p class="mt-10 text-center text-sm text-gray-500">
           Already have an account?
-          <a href="{% url 'login' %}" class="font-semibold text-indigo-600 hover:text-indigo-500">Login</a>
+          <a href="{% url 'login' %}" class="font-semibold text-indigo-600 hover:text-indigo-500">Login</a> / <span><a href="{% url 'test' %}" class="font-semibold text-indigo-600 hover:text-indigo-500">Guest</a></span>
         </p>
 
         <!-- Message Display -->
         {% for message in messages %}
-          <p id="messages" class="mt-4 text-center text-white bg-gray-500 p-2 rounded">
+          <p class="error-message " >
             {{ message }}
           </p>
         {% endfor %}
