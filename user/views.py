@@ -1628,3 +1628,11 @@ def product_detail(request, id):
     # Pass the product details to the template
     return render(request, 'dashboard/product_details.html', {'product': product})
 
+def contactus(request):
+     return render(request, 'dashboard/contactus.html') 
+ 
+def aboutus(request):
+     return render(request, 'dashboard/aboutus.html') 
+ 
+def faq(request):
+     return render(request, 'dashboard/faq.html') 

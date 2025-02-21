@@ -1,0 +1,284 @@
+{% extends 'partials/base.html' %}
+
+{% block content %}
+<style>
+    /* Custom Styling for FAQ */
+    body {
+        font-family: 'Arial', sans-serif;
+        background-color: #f9f9f9;
+        margin: 0;
+        padding: 0;
+    }
+
+    .faq-wrapper {
+        display: flex;
+        margin-top: 50px;
+    }
+
+    /* Sticky Sidebar */
+    .faq-sidebar {
+        position: -webkit-sticky;
+        position: sticky;
+        top: 50px;  /* Keeps it fixed on scroll */
+        width: 200px;
+        height: calc(100vh - 50px);
+        overflow-y: auto;
+        padding: 15px;
+        background-color: #fff;
+        box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.1);
+        border-radius: 8px;
+    }
+
+    .faq-sidebar h2 {
+        font-size: 1.2em;
+        color: #333;
+        cursor: pointer;
+        margin-bottom: 20px;
+    }
+
+    .faq-sidebar ul {
+        padding-left: 20px;
+        list-style-type: none;
+    }
+
+    .faq-sidebar ul li {
+        margin: 10px 0;
+        cursor: pointer;
+        font-size: 1.1em;
+        color: #333;
+    }
+
+    .faq-sidebar ul li:hover {
+        color: #007bff;
+    }
+
+    /* Main FAQ Content */
+    .faq-content {
+        flex-grow: 1;
+        margin-left: 20px;
+        background-color: white;
+        padding: 20px;
+        border-radius: 8px;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    }
+
+    .faq-item {
+        margin-bottom: 20px;
+    }
+
+    .faq-btn {
+        width: 100%;
+        padding: 15px;
+        background-color: #f1f1f1;
+        color: #333;
+        text-align: left;
+        font-size: 1.1em;
+        border: none;
+        cursor: pointer;
+        border-radius: 8px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        transition: background-color 0.3s ease;
+    }
+
+    .faq-btn:hover {
+        background-color: #e0e0e0;
+    }
+
+    .faq-btn.active {
+        background-color: #e0e0e0;
+    }
+
+    .faq-content-text {
+        padding: 15px;
+        background-color: #f8f8f8;
+        border-radius: 8px;
+        margin-top: 10px;
+        display: none;
+        font-size: 1.1em;
+        color: #555;
+    }
+
+    /* Arrow icon for showing and hiding content */
+    .faq-btn .arrow {
+        font-size: 1.2em;
+        transition: transform 0.3s ease;
+    }
+
+    .faq-btn.active .arrow {
+        transform: rotate(180deg);
+    }
+
+    /* Responsive Design */
+    @media (max-width: 768px) {
+        .faq-wrapper {
+            flex-direction: column;
+        }
+
+        .faq-sidebar {
+            width: 100%;
+            height: auto;
+        }
+
+        .faq-content {
+            margin-left: 0;
+            margin-top: 20px;
+        }
+    }
+</style>
+
+<div class="faq-wrapper" style="margin-top: 100px;">
+    <!-- Sidebar Navigation -->
+    <div class="faq-sidebar" >
+        <h2>FAQ Categories</h2>
+        <ul>
+            <li class="category-btn" data-category="general">General</li>
+            <li class="category-btn" data-category="fees">Fees & Charges</li>
+            <li class="category-btn" data-category="account">Managing Your Account</li>
+            <li class="category-btn" data-category="services">Services</li>
+            <li class="category-btn" data-category="fbf">Fulfillment by Flipkart (FBF)</li>
+            <li class="category-btn" data-category="shopsy">Shopsy by Flipkart</li>
+        </ul>
+    </div>
+
+    <!-- FAQ Content -->
+    <div class="faq-content">
+        <!-- General FAQ -->
+        <div class="faq-section" id="general">
+            <div class="faq-item">
+                <button class="faq-btn">Why should I sell on Flipkart? <span class="arrow">↓</span></button>
+                <div class="faq-content-text">
+                    <p>Selling on Flipkart offers you a vast customer base and various marketing tools.</p>
+                </div>
+            </div>
+            <div class="faq-item">
+                <button class="faq-btn">How does selling on Flipkart.com work? <span class="arrow">↓</span></button>
+                <div class="faq-content-text">
+                    <p>Flipkart allows you to list your products and ship them directly to customers.</p>
+                </div>
+            </div>
+            <div class="faq-item">
+                <button class="faq-btn">What is the minimum listing quantity to sell on Flipkart.com? <span class="arrow">↓</span></button>
+                <div class="faq-content-text">
+                    <p>The minimum quantity depends on the category of the product you're selling.</p>
+                </div>
+            </div>
+            <div class="faq-item">
+                <button class="faq-btn">What products can I sell on Flipkart.com? <span class="arrow">↓</span></button>
+                <div class="faq-content-text">
+                    <p>You can sell a wide range of products, including electronics, clothing, and more.</p>
+                </div>
+            </div>
+            <div class="faq-item">
+                <button class="faq-btn">What do I need to register to sell on Flipkart.com? <span class="arrow">↓</span></button>
+                <div class="faq-content-text">
+                    <p>You will need an email address, phone number, and valid bank details to register.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Fees & Charges FAQ -->
+        <div class="faq-section" id="fees" style="display:none;">
+            <div class="faq-item">
+                <button class="faq-btn">What are the fees for selling on Flipkart? <span class="arrow">↓</span></button>
+                <div class="faq-content-text">
+                    <p>The fees vary depending on the category of the product you're selling.</p>
+                </div>
+            </div>
+            <div class="faq-item">
+                <button class="faq-btn">How do I calculate shipping charges? <span class="arrow">↓</span></button>
+                <div class="faq-content-text">
+                    <p>Shipping charges are based on the size, weight, and delivery location of the product.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Managing Your Account FAQ -->
+        <div class="faq-section" id="account" style="display:none;">
+            <div class="faq-item">
+                <button class="faq-btn">How do I reset my password? <span class="arrow">↓</span></button>
+                <div class="faq-content-text">
+                    <p>You can reset your password by clicking the "Forgot Password" link on the login page.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Services FAQ -->
+        <div class="faq-section" id="services" style="display:none;">
+            <div class="faq-item">
+                <button class="faq-btn">What services does Flipkart offer? <span class="arrow">↓</span></button>
+                <div class="faq-content-text">
+                    <p>Flipkart offers services like product listing, fulfillment, shipping, and marketing.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Fulfillment by Flipkart (FBF) FAQ -->
+        <div class="faq-section" id="fbf" style="display:none;">
+            <div class="faq-item">
+                <button class="faq-btn">What is Fulfillment by Flipkart (FBF)? <span class="arrow">↓</span></button>
+                <div class="faq-content-text">
+                    <p>FBF is a service where Flipkart handles storage, packing, and shipping of your products.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Shopsy by Flipkart FAQ -->
+        <div class="faq-section" id="shopsy" style="display:none;">
+            <div class="faq-item">
+                <button class="faq-btn">What is Shopsy? <span class="arrow">↓</span></button>
+                <div class="faq-content-text">
+                    <p>Shopsy is a platform by Flipkart for users to start their online business with ease.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+<script>
+    // Simple JavaScript for showing/hiding FAQ answers
+    document.addEventListener('DOMContentLoaded', function () {
+        const faqButtons = document.querySelectorAll('.faq-btn');
+
+        faqButtons.forEach(button => {
+            button.addEventListener('click', function () {
+                const content = this.nextElementSibling;  // The div containing the answer
+                const arrow = this.querySelector('.arrow');  // The arrow icon
+
+                // Toggle active state and display the content
+                this.classList.toggle('active');
+                if (content.style.display === 'block') {
+                    content.style.display = 'none';  // Hide the answer
+                    arrow.style.transform = 'rotate(0deg)';  // Reset arrow to point down
+                } else {
+                    content.style.display = 'block';  // Show the answer
+                    arrow.style.transform = 'rotate(180deg)';  // Rotate arrow to point up
+                }
+            });
+        });
+
+        // Handle category selection in sidebar
+        const categoryButtons = document.querySelectorAll('.category-btn');
+        categoryButtons.forEach(button => {
+            button.addEventListener('click', function () {
+                const category = this.getAttribute('data-category');
+
+                // Hide all FAQ sections
+                const sections = document.querySelectorAll('.faq-section');
+                sections.forEach(section => {
+                    section.style.display = 'none';
+                });
+
+                // Show the selected FAQ category
+                const selectedSection = document.getElementById(category);
+                if (selectedSection) {
+                    selectedSection.style.display = 'block';
+                }
+            });
+        });
+    });
+</script>
+{% endblock %}
