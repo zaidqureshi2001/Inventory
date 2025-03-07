@@ -1,6 +1,8 @@
 from django.contrib import admin
 from .models import Product, Order, Profile, ShippingAddress, OrderItem
 
+from django.contrib import admin
+from .models import PromoCode
 # Customization for the Product model in the admin interface
 class ProductAdmin(admin.ModelAdmin):
     list_display = ('name', 'quantity', 'category', 'new_arrival')
@@ -19,6 +21,16 @@ class OrderAdmin(admin.ModelAdmin):
         # Display quantities of the products in the order
         return ", ".join([str(item.quantity) for item in obj.orderitem_set.all()])
     product_quantity.short_description = "Product Quantity"
+    
+    
+    
+
+
+class PromoCodeAdmin(admin.ModelAdmin):
+    list_display = ['code', 'discount_percentage', 'valid_from', 'valid_until', 'is_active']
+    list_filter = ['is_active', 'valid_from', 'valid_until']
+
+
 
 # Register models with their respective admin customizations
 admin.site.site_header = "Inventory Admin Panel"
@@ -27,3 +39,4 @@ admin.site.register(Order, OrderAdmin)
 admin.site.register(OrderItem)
 admin.site.register(Profile)
 admin.site.register(ShippingAddress)
+admin.site.register(PromoCode, PromoCodeAdmin)

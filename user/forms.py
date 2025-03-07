@@ -3,7 +3,8 @@ from django import forms
 from .models import Product
 from django.contrib.auth.models import User
 from .models import Profile , Order , OrderItem
-
+from django import forms
+from .models import PromoCode
 
 class CreateUserForm(UserCreationForm):
     email = forms.EmailField()
@@ -48,3 +49,13 @@ class OrderForm(forms.ModelForm):
         model = Order
         fields = ['product' , 'order_quantity']
         
+        
+
+
+# forms.py
+
+
+class PromoCodeForm(forms.ModelForm):
+    class Meta:
+        model = PromoCode
+        fields = ['code', 'discount_percentage', 'valid_from', 'valid_until', 'is_active']

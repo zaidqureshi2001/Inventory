@@ -72,3 +72,19 @@ class Profile(models.Model):
 
     def __str__(self):
         return f'{self.staff.username}--Profile'
+
+
+
+
+
+class PromoCode(models.Model):
+    code = models.CharField(max_length=50, unique=True)  # The promo code entered by the user
+    discount_percentage = models.DecimalField(max_digits=5, decimal_places=2)  # Discount in percentage (e.g., 10.00 for 10%)
+    valid_from = models.DateTimeField()  # The date when the promo code becomes valid
+    valid_until = models.DateTimeField()  # The date when the promo code expires
+    is_active = models.BooleanField(default=True)  # Indicates if the promo code is active
+
+    def __str__(self):
+        return self.code
+
+
